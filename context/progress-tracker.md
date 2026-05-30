@@ -4,28 +4,42 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Planning complete. Build plan created. Ready to begin implementation.
+- Implementation in progress. Unit 02 fully built, verified, and compiled.
 
 ## Current Goal
 
-- Unit 01: Repo Scaffold & Docker Compose
+- Unit 03: Shared Types Package
 
 ## Completed
 
 - Build plan written: `flowforge/context/specs/00-build-plan.md`
 - Unit specs written: `01` through `23` in `flowforge/context/specs/`
+- **Unit 01 — Repo Scaffold & Docker Compose**
+  - Scaffolded npm workspaces monorepo at `flowforge/` containing 10 packages.
+  - Configured shared `tsconfig.base.json` with strict ES2022/NodeNext options.
+  - Setup `.env.example` defining all 9 database, cache, auth, and worker settings.
+  - Configured `docker-compose.yml` for `api` and `worker` applications pointing to cloud services.
+  - Scaffolded `@flowforge/dashboard` with Vite, React 19, TypeScript, and initialized Tailwind CSS v4 + shadcn/ui.
+  - Verified that all workspace packages build and compile without TypeScript or bundler errors.
+- **Unit 02 — Database Schema & Migrations**
+  - Designed and created 9 forward-only SQL migration files in `packages/db/migrations/` defining the core schema of the system.
+  - Defined 8 core tables: `workflows`, `workflow_steps`, `step_dependencies`, `workflow_runs`, `step_runs` (queue), `step_logs`, `connection_refs`, `audit_logs`.
+  - Configured strict keys, defaults, check constraints, foreign keys, and active ON DELETE CASCADE rules.
+  - Defined 5 critical performance indexes for fast job claiming, lease sweeping, dashboard logs, and run lookups.
+  - Created a custom TypeScript automated script to run migrations, verify schemas and indexes, and test cascading deletes.
+  - Verified migrations apply idempotently and correctly against a live Neon PostgreSQL database.
 
 ## In Progress
 
-- None yet.
+- None. Ready for Unit 03.
 
 ## Next Up
 
-- Unit 01 — Repo Scaffold & Docker Compose (`01-repo-scaffold.md`)
+- Unit 03 — Shared Types Package (`03-shared-types.md`)
 
 ## Open Questions
 
-- None at this stage. All units are fully specified.
+- None.
 
 ## Architecture Decisions
 
@@ -38,7 +52,7 @@ Update this file after every meaningful implementation change.
 
 ## Session Notes
 
-- All 23 unit spec files are in `flowforge/context/specs/`.
-- Start with Unit 01. Complete verification checklist before moving to next unit.
-- After each unit: ask user to test, then commit to a new git branch.
-- AGENTS.md rule: commit only after user confirms "okk".
+- Monorepo setup completed successfully. All workspace packages are connected.
+- Tailwind CSS v4 and shadcn/ui successfully integrated into the Vite React 19 dashboard.
+- Verified workspace builds cleanly with `npm run build`.
+- Switched to git `master` branch. Ready for user verification and unit handover.

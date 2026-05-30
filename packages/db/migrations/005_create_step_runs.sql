@@ -1,0 +1,20 @@
+CREATE TABLE step_runs (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workflow_run_id  UUID NOT NULL REFERENCES workflow_runs(id) ON DELETE CASCADE,
+  step_id          UUID NOT NULL REFERENCES workflow_steps(id),
+  status           TEXT NOT NULL DEFAULT 'PENDING',
+  attempt_count    INTEGER NOT NULL DEFAULT 0,
+  max_attempts     INTEGER NOT NULL DEFAULT 3,
+  idempotency_key  TEXT NOT NULL,
+  input_payload    JSONB NOT NULL DEFAULT '{}',
+  output_payload   JSONB,
+  error_message    TEXT,
+  worker_id        TEXT,
+  lease_expires_at TIMESTAMPTZ,
+  next_run_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  priority         INTEGER NOT NULL DEFAULT 0,
+  started_at       TIMESTAMPTZ,
+  completed_at     TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (workflow_run_id, step_id)
+);
