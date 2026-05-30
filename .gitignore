@@ -1,0 +1,78 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# FlowForge — Workspace .gitignore
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ─── System / OS Files ───
+.DS_Store
+Thumbs.db
+*.db
+
+# ─── Dependency Directories ───
+node_modules/
+jspm_packages/
+web_modules/
+
+# ─── Build / Distribution Outputs ───
+dist/
+build/
+out/
+.next/
+.nuxt/
+.docusaurus/
+.svelte-kit/
+.vite/
+.turbo/
+*.tsbuildinfo
+
+# ─── Environment & Secrets ───
+# Ignore all environment file configurations except .env.example
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+# ─── Logs & Diagnostics ───
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# ─── Testing & Coverage ───
+coverage/
+.nyc_output/
+.jest/
+test-results/
+.playwright/
+playwright-report/
+
+# ─── IDE & Editor Configurations ───
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
+# JetBrains (IntelliJ, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Miscellaneous editors
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+
+# ─── Docker / Container Runtime ───
+.docker/
+docker-compose.override.yml
