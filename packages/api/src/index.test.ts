@@ -680,5 +680,369 @@ describe('Fastify API Foundation and Authentication Tests', () => {
     assert.ok(auditRow.metadata.workflowId, 'metadata must contain workflowId');
     assert.ok(typeof auditRow.metadata.inputPayloadSize === 'number', 'metadata must contain inputPayloadSize as number');
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Unit 14 — Step Retry, Replay & Cancel API Tests
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('Unit 14 — Step Retry, Replay & Cancel API', () => {
+    let testWorkflowId: string;
+    let stepIdA: string;
+    let stepIdB: string;
+
+    before(async () => {
+      // Seed a clean workflow for these tests
+      testWorkflowId = crypto.randomUUID();
+      stepIdA = crypto.randomUUID();
+      stepIdB = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO workflows (id, name, created_by) VALUES ($1, $2, $3)`,
+        [testWorkflowId, 'Ops Test Workflow', 'test-operator']
+      );
+      createdWorkflowIds.push(testWorkflowId);
+
+      await pool.query(
+        `INSERT INTO workflow_steps (id, workflow_id, step_key, handler_name, input_config, retry_policy, timeout_seconds)
+         VALUES ($1, $2, 'step-a', 'http-request', '{}', '{"maxAttempts":3,"baseDelayMs":1000}', 30)`,
+        [stepIdA, testWorkflowId]
+      );
+
+      await pool.query(
+        `INSERT INTO workflow_steps (id, workflow_id, step_key, handler_name, input_config, retry_policy, timeout_seconds)
+         VALUES ($1, $2, 'step-b', 'transform-json', '{}', '{"maxAttempts":2,"baseDelayMs":1000}', 30)`,
+        [stepIdB, testWorkflowId]
+      );
+
+      await pool.query(
+        `INSERT INTO step_dependencies (step_id, depends_on_step_id) VALUES ($1, $2)`,
+        [stepIdB, stepIdA]
+      );
+    });
+
+    test('All Unit 14 routes return 403 for viewer role', async () => {
+      const fakeId = crypto.randomUUID();
+
+      // Retry
+      const resRetry = await app.inject({
+        method: 'POST',
+        url: `/api/steps/${fakeId}/retry`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'viewer',
+        },
+      });
+      assert.strictEqual(resRetry.statusCode, 403);
+
+      // Replay
+      const resReplay = await app.inject({
+        method: 'POST',
+        url: `/api/runs/${fakeId}/replay`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'viewer',
+        },
+        payload: { fromStepKey: 'step-b' },
+      });
+      assert.strictEqual(resReplay.statusCode, 403);
+
+      // Cancel
+      const resCancel = await app.inject({
+        method: 'POST',
+        url: `/api/runs/${fakeId}/cancel`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'viewer',
+        },
+      });
+      assert.strictEqual(resCancel.statusCode, 403);
+    });
+
+    test('POST /api/steps/:id/retry updates status and resets parent workflow run status', async () => {
+      // 1. Seed a failed run and a failed step run
+      const runId = crypto.randomUUID();
+      const stepRunId = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO workflow_runs (id, workflow_id, status, triggered_by)
+         VALUES ($1, $2, 'FAILED', 'test-operator')`,
+        [runId, testWorkflowId]
+      );
+
+      await pool.query(
+        `INSERT INTO step_runs (id, workflow_run_id, step_id, status, idempotency_key, attempt_count, max_attempts)
+         VALUES ($1, $2, $3, 'DEAD_LETTERED', 'idemp-1', 3, 3)`,
+        [stepRunId, runId, stepIdA]
+      );
+
+      // 2. POST to retry the step
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/steps/${stepRunId}/retry`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+          'x-mock-user-id': 'operator-user-123',
+        },
+      });
+
+      assert.strictEqual(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.strictEqual(body.data.stepRunId, stepRunId);
+      assert.strictEqual(body.data.status, 'QUEUED');
+
+      // 3. Verify database state
+      const stepRes = await pool.query(`SELECT status, attempt_count FROM step_runs WHERE id = $1`, [stepRunId]);
+      assert.strictEqual(stepRes.rows[0].status, 'QUEUED');
+      assert.strictEqual(stepRes.rows[0].attempt_count, 0);
+
+      const runRes = await pool.query(`SELECT status FROM workflow_runs WHERE id = $1`, [runId]);
+      assert.strictEqual(runRes.rows[0].status, 'RUNNING');
+
+      // 4. Verify audit log row
+      const auditRes = await pool.query(
+        `SELECT action, actor_id, metadata FROM audit_logs WHERE resource_id = $1 AND action = 'step.retry'`,
+        [stepRunId]
+      );
+      assert.strictEqual(auditRes.rows.length, 1);
+      assert.strictEqual(auditRes.rows[0].actor_id, 'operator-user-123');
+      assert.deepStrictEqual(auditRes.rows[0].metadata, { workflowRunId: runId });
+    });
+
+    test('POST /api/steps/:id/retry returns 409 for non-retryable step status', async () => {
+      const runId = crypto.randomUUID();
+      const stepRunId = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO workflow_runs (id, workflow_id, status, triggered_by)
+         VALUES ($1, $2, 'RUNNING', 'test-operator')`,
+        [runId, testWorkflowId]
+      );
+
+      await pool.query(
+        `INSERT INTO step_runs (id, workflow_run_id, step_id, status, idempotency_key, attempt_count, max_attempts)
+         VALUES ($1, $2, $3, 'RUNNING', 'idemp-2', 0, 3)`,
+        [stepRunId, runId, stepIdA]
+      );
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/steps/${stepRunId}/retry`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+          'x-mock-user-id': 'operator-user-123',
+        },
+      });
+
+      assert.strictEqual(res.statusCode, 409);
+      const body = JSON.parse(res.body);
+      assert.strictEqual(body.error.code, 'INVALID_STATUS');
+    });
+
+    test('POST /api/runs/:id/replay creates replay run and schedules replay step', async () => {
+      // 1. Seed original failed run
+      const origRunId = crypto.randomUUID();
+      const origStepRunA = crypto.randomUUID();
+      const origStepRunB = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO workflow_runs (id, workflow_id, status, input_payload, triggered_by)
+         VALUES ($1, $2, 'FAILED', '{"key":"value"}', 'test-operator')`,
+        [origRunId, testWorkflowId]
+      );
+
+      await pool.query(
+        `INSERT INTO step_runs (id, workflow_run_id, step_id, status, idempotency_key, output_payload, completed_at)
+         VALUES ($1, $2, $3, 'SUCCEEDED', 'idemp-3', '{"out":"a"}', NOW())`,
+        [origStepRunA, origRunId, stepIdA]
+      );
+
+      await pool.query(
+        `INSERT INTO step_runs (id, workflow_run_id, step_id, status, idempotency_key, error_message, completed_at)
+         VALUES ($1, $2, $3, 'FAILED', 'idemp-4', 'failed step b', NOW())`,
+        [origStepRunB, origRunId, stepIdB]
+      );
+
+      // 2. POST to replay from step-b
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/runs/${origRunId}/replay`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+          'x-mock-user-id': 'operator-user-123',
+        },
+        payload: { fromStepKey: 'step-b' },
+      });
+
+      assert.strictEqual(res.statusCode, 202);
+      const body = JSON.parse(res.body);
+      const newRun = body.data;
+
+      assert.ok(newRun.id);
+      assert.strictEqual(newRun.status, 'RUNNING');
+      assert.strictEqual(newRun.originalRunId, origRunId);
+
+      // 3. Verify step run statuses in replay run:
+      // step-a (before replay point) -> SUCCEEDED with original output
+      // step-b (replay point) -> QUEUED (as it depends on step-a which is SUCCEEDED)
+      const stepsRes = await pool.query(
+        `SELECT step_id, status, output_payload FROM step_runs WHERE workflow_run_id = $1`,
+        [newRun.id]
+      );
+      const sMap = new Map(stepsRes.rows.map(r => [r.step_id, r]));
+
+      const sA = sMap.get(stepIdA)!;
+      const sB = sMap.get(stepIdB)!;
+
+      assert.strictEqual(sA.status, 'SUCCEEDED');
+      assert.deepStrictEqual(sA.output_payload, { out: 'a' });
+      assert.strictEqual(sB.status, 'QUEUED');
+
+      // 4. Verify audit log row
+      const auditRes = await pool.query(
+        `SELECT action, actor_id, metadata FROM audit_logs WHERE resource_id = $1 AND action = 'run.replay'`,
+        [newRun.id]
+      );
+      assert.strictEqual(auditRes.rows.length, 1);
+      assert.strictEqual(auditRes.rows[0].actor_id, 'operator-user-123');
+      assert.deepStrictEqual(auditRes.rows[0].metadata, { originalRunId: origRunId });
+    });
+
+    test('POST /api/runs/:id/replay returns 409 for active run', async () => {
+      const origRunId = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO workflow_runs (id, workflow_id, status, triggered_by)
+         VALUES ($1, $2, 'RUNNING', 'test-operator')`,
+        [origRunId, testWorkflowId]
+      );
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/runs/${origRunId}/replay`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+          'x-mock-user-id': 'operator-user-123',
+        },
+        payload: { fromStepKey: 'step-b' },
+      });
+
+      assert.strictEqual(res.statusCode, 409);
+      const body = JSON.parse(res.body);
+      assert.strictEqual(body.error.code, 'INVALID_STATUS');
+    });
+
+    test('POST /api/runs/:id/replay returns 422 for invalid step key', async () => {
+      const origRunId = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO workflow_runs (id, workflow_id, status, triggered_by)
+         VALUES ($1, $2, 'FAILED', 'test-operator')`,
+        [origRunId, testWorkflowId]
+      );
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/runs/${origRunId}/replay`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+          'x-mock-user-id': 'operator-user-123',
+        },
+        payload: { fromStepKey: 'nonexistent-step' },
+      });
+
+      assert.strictEqual(res.statusCode, 422);
+      const body = JSON.parse(res.body);
+      assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+    });
+
+    test('POST /api/runs/:id/cancel updates step runs and run statuses', async () => {
+      // 1. Seed running run with active and pending steps
+      const runId = crypto.randomUUID();
+      const stepRunA = crypto.randomUUID();
+      const stepRunB = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO workflow_runs (id, workflow_id, status, triggered_by)
+         VALUES ($1, $2, 'RUNNING', 'test-operator')`,
+        [runId, testWorkflowId]
+      );
+
+      await pool.query(
+        `INSERT INTO step_runs (id, workflow_run_id, step_id, status, idempotency_key)
+         VALUES ($1, $2, $3, 'RUNNING', 'idemp-5')`,
+        [stepRunA, runId, stepIdA]
+      );
+
+      await pool.query(
+        `INSERT INTO step_runs (id, workflow_run_id, step_id, status, idempotency_key)
+         VALUES ($1, $2, $3, 'PENDING', 'idemp-6')`,
+        [stepRunB, runId, stepIdB]
+      );
+
+      // 2. POST to cancel
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/runs/${runId}/cancel`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+          'x-mock-user-id': 'operator-user-123',
+        },
+      });
+
+      assert.strictEqual(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.strictEqual(body.data.runId, runId);
+      assert.strictEqual(body.data.cancelled, 1);   // PENDING is set to CANCELLED
+      assert.strictEqual(body.data.requested, 1);   // RUNNING is set to CANCEL_REQUESTED
+
+      // 3. Verify DB state
+      const runRes = await pool.query(`SELECT status FROM workflow_runs WHERE id = $1`, [runId]);
+      assert.strictEqual(runRes.rows[0].status, 'CANCELLED');
+
+      const sARes = await pool.query(`SELECT status FROM step_runs WHERE id = $1`, [stepRunA]);
+      const sBRes = await pool.query(`SELECT status FROM step_runs WHERE id = $1`, [stepRunB]);
+      assert.strictEqual(sARes.rows[0].status, 'CANCEL_REQUESTED');
+      assert.strictEqual(sBRes.rows[0].status, 'CANCELLED');
+
+      // 4. Verify audit log row
+      const auditRes = await pool.query(
+        `SELECT action, actor_id, metadata FROM audit_logs WHERE resource_id = $1 AND action = 'run.cancel'`,
+        [runId]
+      );
+      assert.strictEqual(auditRes.rows.length, 1);
+      assert.strictEqual(auditRes.rows[0].actor_id, 'operator-user-123');
+      assert.deepStrictEqual(auditRes.rows[0].metadata, { cancelled: 1, requested: 1 });
+    });
+
+    test('POST /api/runs/:id/cancel returns 409 for already terminal run', async () => {
+      const runId = crypto.randomUUID();
+
+      await pool.query(
+        `INSERT INTO workflow_runs (id, workflow_id, status, triggered_by)
+         VALUES ($1, $2, 'COMPLETED', 'test-operator')`,
+        [runId, testWorkflowId]
+      );
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/runs/${runId}/cancel`,
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+          'x-mock-user-id': 'operator-user-123',
+        },
+      });
+
+      assert.strictEqual(res.statusCode, 409);
+      const body = JSON.parse(res.body);
+      assert.strictEqual(body.error.code, 'INVALID_STATUS');
+    });
+  });
 });
 
