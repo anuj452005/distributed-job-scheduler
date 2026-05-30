@@ -10,6 +10,12 @@ declare module 'fastify' {
 }
 
 export const requireAuth: preHandlerHookHandler = async (request, reply) => {
+  // Extract token from query parameter for SSE EventSource support
+  const query = request.query as { token?: string } | undefined;
+  if (query?.token) {
+    request.headers.authorization = `Bearer ${query.token}`;
+  }
+
   if (process.env.NODE_ENV === 'test') {
     // In test environment, allow mock auth bypassing remote Clerk JWKS calls
     const authHeader = request.headers.authorization;

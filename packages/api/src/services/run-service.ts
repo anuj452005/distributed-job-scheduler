@@ -125,6 +125,24 @@ export async function getRunDetail(
     [runId]
   );
 
+  // Fetch workflow-level step dependencies to build the DAG edges on the frontend
+  const depsRes = await pool.query(
+    `SELECT ws.step_key, dep_ws.step_key AS depends_on_key
+     FROM step_dependencies sd
+     JOIN workflow_steps ws ON ws.id = sd.step_id
+     JOIN workflow_steps dep_ws ON dep_ws.id = sd.depends_on_step_id
+     WHERE ws.workflow_id = $1`,
+    [runRow.workflow_id]
+  );
+
+  // Map dependencies by stepKey
+  const depMap = new Map<string, string[]>();
+  for (const depRow of depsRes.rows) {
+    const list = depMap.get(depRow.step_key) || [];
+    list.push(depRow.depends_on_key);
+    depMap.set(depRow.step_key, list);
+  }
+
   const steps: StepRunDto[] = stepsRes.rows.map(row => ({
     id: row.id,
     stepId: row.step_id,
@@ -140,6 +158,7 @@ export async function getRunDetail(
     startedAt: row.started_at ? (row.started_at as Date).toISOString() : null,
     completedAt: row.completed_at ? (row.completed_at as Date).toISOString() : null,
     createdAt: (row.created_at as Date).toISOString(),
+    dependsOn: depMap.get(row.step_key) || [],
   }));
 
   return {

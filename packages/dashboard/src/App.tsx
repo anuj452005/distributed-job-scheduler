@@ -1,11 +1,12 @@
 import { createBrowserRouter } from 'react-router-dom';
 import AppShell from './components/shell/AppShell.tsx';
 import SignInPage from './pages/SignInPage.tsx';
-import DashboardPage from './pages/DashboardPage.tsx';
+import DashboardHomePage from './pages/DashboardHomePage.tsx';
 import WorkflowsPage from './pages/workflows/WorkflowsPage.tsx';
 import WorkflowCreatePage from './pages/workflows/WorkflowCreatePage.tsx';
 import WorkflowDetailPage from './pages/workflows/WorkflowDetailPage.tsx';
-import RunsPage from './pages/RunsPage.tsx';
+import RunsListPage from './pages/runs/RunsListPage.tsx';
+import RunDetailPage from './pages/runs/RunDetailPage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
 
 export const router = createBrowserRouter([
@@ -20,7 +21,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <DashboardPage />,
+        element: <DashboardHomePage />,
       },
       {
         path: 'workflows',
@@ -36,7 +37,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'runs',
-        element: <RunsPage />,
+        element: <RunsListPage />,
+      },
+      {
+        path: 'runs/:id',
+        element: <RunDetailPage />,
       },
       {
         path: '*',

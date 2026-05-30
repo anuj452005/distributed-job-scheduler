@@ -7,6 +7,7 @@ import { healthRoutes } from './routes/health.js';
 import { workflowRoutes } from './routes/workflows/index.js';
 import { runRoutes } from './routes/runs/index.js';
 import { eventRoutes } from './routes/events/index.js';
+import { statsRoutes } from './routes/stats.js';
 import { handlerRegistry, registerAllHandlers } from '@flowforge/handlers';
 
 
@@ -56,6 +57,9 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // Register events routes under /api
   await app.register(eventRoutes, { prefix: '/api' });
+
+  // Register stats routes under /api
+  await app.register(statsRoutes, { prefix: '/api' });
 
   return app;
 }

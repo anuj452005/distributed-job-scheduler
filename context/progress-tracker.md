@@ -4,13 +4,21 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Unit 13 fully built, verified, and compiled. Ready for Unit 14.
+- Unit 19 and 20 fully built, verified, and compiled.
 
 ## Current Goal
 
-- Unit 14: SSE Gateway / real-time events (or next spec unit).
+- Proceed to verify specifications.
 
 ## Completed
+
+- **Unit 19 & 20 — Run Detail DAG & Dashboard Home**
+  - Added REST API routes `GET /api/stats` and `GET /api/steps/:id/logs` to Fastify backend and registered in `server.ts`.
+  - Configured query-parameter token support in `requireAuth` middleware for native EventSource client socket integrations.
+  - Created ReactFlow topology workflow diagram (`DagCanvas.tsx`) using custom `StepNode.tsx` with rank status positioning via Dagre.
+  - Implemented sliding drawer component (`StepDetailDrawer.tsx`) for JSON payloads, error logs, and virtualized log feed (`LogViewer.tsx`) via `@tanstack/react-virtual`.
+  - Completed telemetry console page (`DashboardHomePage.tsx`) with dynamic active worker orphaned notifications, filterable lists, and real-time SSE global stream updates.
+  - Integrated full type-checking and compiled whole monorepo successfully with zero compiler/bundler errors.
 
 - **Unit 13 — Run Trigger & Status API**
   - Implemented `run-service.ts` with `triggerRun`, `getRunDetail`, `listRuns`, and `listRunsByWorkflow`.

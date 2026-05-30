@@ -8,6 +8,7 @@ import { listRunsByWorkflowRoute } from './list-by-workflow.js';
 import { retryStepRoute } from './retry-step.js';
 import { replayRoute } from './replay.js';
 import { cancelRoute } from './cancel.js';
+import { getStepLogsRoute } from './step-logs.js';
 
 export async function runRoutes(app: FastifyInstance): Promise<void> {
   // POST /workflows/:id/runs — operator only, triggers a new run
@@ -49,5 +50,12 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
     '/runs/:id/cancel',
     { preHandler: [requireAuth, requireRole('operator')] },
     cancelRoute
+  );
+
+  // GET /steps/:id/logs — any authenticated role, fetches step execution logs
+  app.get(
+    '/steps/:id/logs',
+    { preHandler: [requireAuth] },
+    getStepLogsRoute
   );
 }

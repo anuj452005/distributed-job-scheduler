@@ -57,6 +57,7 @@ export type StepRunDto = {
   startedAt:      string | null;
   completedAt:    string | null;
   createdAt:      string;
+  dependsOn?:     string[];
 };
 
 // Replay DTO
