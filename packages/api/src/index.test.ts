@@ -1044,5 +1044,152 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       assert.strictEqual(body.error.code, 'INVALID_STATUS');
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Unit 15 — SSE Gateway Tests
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Unit 15 — SSE Gateway', () => {
+    let serverAddress: string;
+
+    before(async () => {
+      // Start the Fastify server listening on a random local port
+      serverAddress = await app.listen({ port: 0, host: '127.0.0.1' });
+    });
+
+    test('GET /api/events/stream without Authorization header returns 401', async () => {
+      const response = await fetch(`${serverAddress}/api/events/stream`);
+      assert.strictEqual(response.status, 401);
+      const body = await response.json();
+      assert.strictEqual(body.error.code, 'UNAUTHORIZED');
+    });
+
+    test('GET /api/events/stream with invalid runId returns 400 validation error', async () => {
+      const response = await fetch(`${serverAddress}/api/events/stream?runId=invalid-uuid`, {
+        headers: {
+          authorization: 'Bearer valid-test-token',
+        },
+      });
+      assert.strictEqual(response.status, 400);
+      const body = await response.json();
+      assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+    });
+
+    test('GET /api/events/stream establishes SSE stream and receives ping/events', async () => {
+      const controller = new AbortController();
+      const signal = controller.signal;
+
+      const runId = crypto.randomUUID();
+
+      // Initiate SSE request
+      const response = await fetch(`${serverAddress}/api/events/stream?runId=${runId}`, {
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+        },
+        signal,
+      });
+
+      // Verify response headers
+      assert.strictEqual(response.status, 200);
+      assert.strictEqual(response.headers.get('content-type'), 'text/event-stream');
+      assert.strictEqual(response.headers.get('cache-control'), 'no-cache');
+      assert.strictEqual(response.headers.get('connection'), 'keep-alive');
+      assert.strictEqual(response.headers.get('x-accel-buffering'), 'no');
+
+      // Read stream content
+      const reader = response.body?.getReader();
+      assert.ok(reader);
+
+      // Publish an event to this run's channel via the events package
+      const { publishStepEvent } = await import('@flowforge/events');
+      
+      const testEvent = {
+        type: 'step.started' as const,
+        workflowRunId: runId,
+        stepRunId: crypto.randomUUID(),
+        stepId: 'step-a',
+        status: 'RUNNING',
+        timestamp: new Date().toISOString(),
+      };
+
+      // Publish the event
+      await publishStepEvent(testEvent);
+
+      // Read from the reader
+      const decoder = new TextDecoder();
+      let streamData = '';
+      
+      // Wait up to 5 seconds to receive the event
+      const startTime = Date.now();
+      while (Date.now() - startTime < 5000) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        streamData += decoder.decode(value, { stream: true });
+        if (streamData.includes('step.started')) {
+          break;
+        }
+      }
+
+      // Assert event was received
+      assert.ok(streamData.includes('event: step.started'), 'SSE should transmit event type');
+      assert.ok(streamData.includes(runId), 'SSE should transmit event data with correct runId');
+
+      // Abort connection to simulate client disconnect and trigger cleanup
+      controller.abort();
+    });
+
+    test('GET /api/events/stream global stream receives events from any run', async () => {
+      const controller = new AbortController();
+      const signal = controller.signal;
+
+      const runId = crypto.randomUUID();
+
+      // Initiate SSE request without runId parameter (global stream)
+      const response = await fetch(`${serverAddress}/api/events/stream`, {
+        headers: {
+          authorization: 'Bearer valid-test-token',
+          'x-mock-role': 'operator',
+        },
+        signal,
+      });
+
+      assert.strictEqual(response.status, 200);
+
+      const reader = response.body?.getReader();
+      assert.ok(reader);
+
+      // Publish a step event
+      const { publishStepEvent } = await import('@flowforge/events');
+      
+      const testEvent = {
+        type: 'step.succeeded' as const,
+        workflowRunId: runId,
+        stepRunId: crypto.randomUUID(),
+        stepId: 'step-b',
+        status: 'SUCCEEDED',
+        timestamp: new Date().toISOString(),
+      };
+
+      await publishStepEvent(testEvent);
+
+      const decoder = new TextDecoder();
+      let streamData = '';
+      
+      const startTime = Date.now();
+      while (Date.now() - startTime < 5000) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        streamData += decoder.decode(value, { stream: true });
+        if (streamData.includes('step.succeeded')) {
+          break;
+        }
+      }
+
+      assert.ok(streamData.includes('event: step.succeeded'), 'Global SSE stream should receive events');
+      assert.ok(streamData.includes(runId), 'Global SSE stream should receive correct event data');
+
+      controller.abort();
+    });
+  });
 });
 

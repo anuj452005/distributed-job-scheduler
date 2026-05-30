@@ -6,7 +6,9 @@ import { errorHandler } from './error-handler.js';
 import { healthRoutes } from './routes/health.js';
 import { workflowRoutes } from './routes/workflows/index.js';
 import { runRoutes } from './routes/runs/index.js';
+import { eventRoutes } from './routes/events/index.js';
 import { handlerRegistry, registerAllHandlers } from '@flowforge/handlers';
+
 
 export async function buildServer(): Promise<FastifyInstance> {
   // Register all workflow handlers for DAG validation (guard against double-registration)
@@ -15,6 +17,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   }
 
   const app = Fastify({
+    connectionTimeout: 0, // 0 = no timeout (SSE connections are long-lived)
     logger: {
       transport: process.env.NODE_ENV === 'test' ? undefined : {
         target: 'pino-pretty',
@@ -50,6 +53,9 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // Register run routes under /api
   await app.register(runRoutes, { prefix: '/api' });
+
+  // Register events routes under /api
+  await app.register(eventRoutes, { prefix: '/api' });
 
   return app;
 }
