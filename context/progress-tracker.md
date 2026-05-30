@@ -4,11 +4,11 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Implementation in progress. Unit 02 fully built, verified, and compiled.
+- Implementation in progress. Unit 03 fully built, verified, and compiled.
 
 ## Current Goal
 
-- Unit 03: Shared Types Package
+- Unit 04: DB Package & Connection Pool
 
 ## Completed
 
@@ -28,14 +28,22 @@ Update this file after every meaningful implementation change.
   - Defined 5 critical performance indexes for fast job claiming, lease sweeping, dashboard logs, and run lookups.
   - Created a custom TypeScript automated script to run migrations, verify schemas and indexes, and test cascading deletes.
   - Verified migrations apply idempotently and correctly against a live Neon PostgreSQL database.
+- **Unit 03 — Shared Types Package**
+  - Created status enums (`WorkflowStatus`, `StepStatus`, `AuditAction`, `LogLevel`) in `packages/shared/src/status.ts`.
+  - Created step definitions and event structures (`StepContext`, `StepHandler`, etc.) using `pino`'s `Logger` in `packages/shared/src/types.ts`.
+  - Defined standard database table row structures (`WorkflowRow`, `WorkflowStepRow`, etc.) in `packages/shared/src/entities.ts`.
+  - Defined serializable camelCase API DTO request/response bodies in `packages/shared/src/dto.ts`.
+  - Re-exported all sub-modules from the entrypoint `packages/shared/src/index.ts` and successfully verified compilation of the entire workspace monorepo.
+
 
 ## In Progress
 
-- None. Ready for Unit 03.
+- None. Ready for Unit 04.
 
 ## Next Up
 
-- Unit 03 — Shared Types Package (`03-shared-types.md`)
+- Unit 04 — DB Package & Connection Pool (`04-db-package.md`)
+
 
 ## Open Questions
 
