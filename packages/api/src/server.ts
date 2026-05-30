@@ -1,0 +1,45 @@
+import Fastify, { type FastifyInstance } from 'fastify';
+import { clerkPlugin } from '@clerk/fastify';
+import cors from '@fastify/cors';
+import { config } from './config.js';
+import { errorHandler } from './error-handler.js';
+import { healthRoutes } from './routes/health.js';
+import { workflowRoutes } from './routes/workflows.js';
+
+export async function buildServer(): Promise<FastifyInstance> {
+  const app = Fastify({
+    logger: {
+      transport: process.env.NODE_ENV === 'test' ? undefined : {
+        target: 'pino-pretty',
+        options: {
+          translateTime: 'HH:MM:ss Z',
+          ignore: 'pid,hostname',
+        },
+      },
+    },
+  });
+
+  // Enable CORS
+  await app.register(cors, {
+    origin: '*',
+  });
+
+  // Clerk JWT verification plugin
+  if (process.env.NODE_ENV !== 'test') {
+    await app.register(clerkPlugin, {
+      secretKey: config.CLERK_SECRET_KEY,
+      publishableKey: config.CLERK_PUBLISHABLE_KEY,
+    });
+  }
+
+  // Global error handler
+  app.setErrorHandler(errorHandler);
+
+  // Register health route
+  await app.register(healthRoutes);
+
+  // Register workflow routes under /api
+  await app.register(workflowRoutes, { prefix: '/api' });
+
+  return app;
+}

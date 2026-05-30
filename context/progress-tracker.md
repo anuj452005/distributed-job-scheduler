@@ -4,13 +4,23 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Unit 10 fully built, verified, and compiled. Ready for API implementation.
+- Unit 11 fully built, verified, and compiled. Ready for Unit 12.
 
 ## Current Goal
 
-- Unit 11: API Foundation Package (`11-api-foundation.md`)
+- Unit 12: Workflows and Steps CRUD routes.
 
 ## Completed
+
+- **Unit 11 — API Foundation & Auth**
+  - Configured `@flowforge/api` package using Fastify v5, CORS, and monorepo dependencies.
+  - Implemented fail-fast Zod-based config parsing inside `config.ts`.
+  - Built a global Fastify error handler inside `error-handler.ts` to log exceptions, sanitize 500 database errors, and format Zod schema violations into 422 JSON payloads.
+  - Implemented Clerk-based authentication preHandler middleware (`requireAuth`) extracting roles from `publicMetadata` and supporting hermetic test-environment mocks.
+  - Developed custom route-guard preHandler (`requireRole`) to enforce role-based access control (e.g. `operator` vs `viewer`).
+  - Added unprotected `/health` and protected `/api/workflows` routes to test and verify access scopes.
+  - Integrated startup orchestration executing DB migrations via `@flowforge/db` and booting background schedulers via `@flowforge/scheduler`, with clean lifecycle teardowns on SIGINT/SIGTERM.
+  - Wrote comprehensive offline integration test suite (`index.test.ts`) covering all auth, guard, and error paths (8/8 tests passing successfully).
 
 - **Unit 10 — Engine Package (Orchestration Brain)**
   - Implemented Kahn's algorithm for topological sorting in `topological-sort.ts` to sort workflow steps and detect cyclic dependencies.

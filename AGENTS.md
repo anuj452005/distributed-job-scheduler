@@ -24,4 +24,4 @@ standards documented in the context files, update the
 relevant file before continuing.
 
 
-NOTE: after each success full step create the new branch and commit to the git and make sure it is working locally before moving to the next step. first ask the user to test it and when user say okk then commit it . 
+NOTE: after each success full step create the new branch and commit to the git , also remote pull request and make sure it is working locally before moving to the next step. first ask the user to test it and when user say okk then commit it . and then merge to master branch . do not delete the previous branch.

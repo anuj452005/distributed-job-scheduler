@@ -17,6 +17,7 @@ let subscriberClient: any;
 
 if (useMock) {
   logger.info('Using in-memory mock Redis for events package');
+  // @ts-ignore
   const RedisMock: any = ((await import('ioredis-mock')) as any).default;
   publisherClient = new RedisMock();
   subscriberClient = new RedisMock();

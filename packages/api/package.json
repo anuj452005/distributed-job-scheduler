@@ -2,11 +2,30 @@
   "name": "@flowforge/api",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "dev": "node dist/index.js"
+    "dev": "node dist/index.js",
+    "test": "node --import tsx --test src/index.test.ts"
+  },
+  "dependencies": {
+    "@flowforge/db": "*",
+    "@flowforge/scheduler": "*",
+    "@flowforge/shared": "*",
+    "fastify": "^5.2.0",
+    "@clerk/fastify": "^3.1.32",
+    "@fastify/cors": "^10.0.1",
+    "fastify-type-provider-zod": "^4.0.2",
+    "pino": "^9.1.0",
+    "zod": "^3.23.8",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.11.2",
+    "tsx": "^4.7.1"
   }
 }
