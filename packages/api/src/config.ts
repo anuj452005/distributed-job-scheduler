@@ -10,4 +10,10 @@ const ConfigSchema = z.object({
   SWEEPER_POLL_INTERVAL_MS:   z.coerce.number().default(15000),
 });
 
-export const config = ConfigSchema.parse(process.env);
+// Support fallback from NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY if CLERK_PUBLISHABLE_KEY is not defined
+const envWithFallback = {
+  ...process.env,
+  CLERK_PUBLISHABLE_KEY: process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+};
+
+export const config = ConfigSchema.parse(envWithFallback);
