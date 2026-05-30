@@ -4,15 +4,22 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Implementation in progress. Unit 07 fully built, verified, and compiled.
+- Implementation in progress. Unit 08 fully built, verified, and compiled.
 
 ## Current Goal
 
-- Unit 08: Scheduler Process
+- Unit 09: Events Package
 
 ## Completed
 
 
+- **Unit 08 — Scheduler & Lease Sweeper**
+  - Configured `@flowforge/scheduler` with standard ESM module architecture (`"type": "module"`) and monorepo dependencies.
+  - Implemented `scheduler-context.ts` tracking running status and active timers for safe lifecycle orchestration.
+  - Developed `retry-scheduler.ts` triggering delayed step promotions from `RETRYING` to `QUEUED` safely and idempotently.
+  - Developed `lease-sweeper.ts` implementing heartbeat sweep checks to reclaim crashed worker leases and dead-letter exhausted step runs (marking parent workflow runs as `FAILED` using the `getWorkflowRunIdForStep` and `moveToDeadLetter` helper sequence).
+  - Wrote comprehensive integration test suite verifying precise crash recovery scenarios and start/stop behavior.
+  - Successfully verified building, typechecking, and testing across the entire monorepo with zero compilation errors.
 - Build plan written: `flowforge/context/specs/00-build-plan.md`
 - Unit specs written: `01` through `23` in `flowforge/context/specs/`
 - **Unit 07 — Worker Process**
