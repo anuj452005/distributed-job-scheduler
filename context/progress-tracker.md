@@ -4,15 +4,25 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Unit 12 fully built, verified, and compiled. Ready for Unit 13.
+- Unit 13 fully built, verified, and compiled. Ready for Unit 14.
 
 ## Current Goal
 
-- Unit 13: Run trigger and run management routes.
+- Unit 14: SSE Gateway / real-time events (or next spec unit).
 
 ## Completed
 
-- **Unit 12 — Workflow CRUD API**
+- **Unit 13 — Run Trigger & Status API**
+  - Implemented `run-service.ts` with `triggerRun`, `getRunDetail`, `listRuns`, and `listRunsByWorkflow`.
+  - `triggerRun` verifies workflow exists and has steps, delegates to `createWorkflowRun()` from `@flowforge/engine`, then inserts an audit log row recording only `workflowId` and `inputPayloadSize` (never payload contents).
+  - `POST /api/workflows/:id/runs` (operator-only) returns `202 Accepted` with full `WorkflowRunDto`; root steps are `QUEUED`, non-root steps are `PENDING`.
+  - `GET /api/runs/:id` returns full run state with `workflowName`, all `step_runs` joined with `stepKey` and `handlerName`.
+  - `GET /api/runs` supports `page`, `limit`, `status`, `workflowId`, `from`, `to` ISO date filters.
+  - `GET /api/workflows/:id/runs` returns runs scoped to a specific workflow.
+  - All error cases handled: `WORKFLOW_NOT_FOUND` (404), `WORKFLOW_EMPTY` (422), `RUN_NOT_FOUND` (404), `VALIDATION_ERROR` (422), `FORBIDDEN` (403).
+  - `runRoutes` Fastify plugin registered in `server.ts` under `/api` prefix.
+  - 10 new integration tests added; full suite 23/23 passing, 0 failures. `tsc --noEmit` exits 0.
+
   - Replaced monolithic `routes/workflows.ts` stub with modular route folder `routes/workflows/` containing individual handlers for `create`, `list`, `get`, `update`, and `delete`.
   - Implemented full `workflow-service.ts` service layer with transactional `createWorkflow`, `listWorkflows`, `getWorkflow`, `updateWorkflow`, and `deleteWorkflow` DB operations.
   - `createWorkflow` and `updateWorkflow` run inside DB transactions inserting workflows, steps, and dependency edges atomically.
