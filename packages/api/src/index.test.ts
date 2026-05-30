@@ -435,4 +435,250 @@ describe('Fastify API Foundation and Authentication Tests', () => {
     assert.strictEqual(body.error.message, 'An unexpected error occurred');
     assert.strictEqual(body.error.details, undefined);
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Unit 13 — Run Trigger & Status API
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Track run IDs created during these tests for cleanup
+  const createdRunIds: string[] = [];
+
+  test('POST /api/workflows/:id/runs → 202 with WorkflowRunDto; root step QUEUED, non-root PENDING', async () => {
+    // Use the first workflow created earlier (it was updated to 1 step by the PUT test, so re-create a 2-step one)
+    const wfPayload = {
+      name: 'Run Trigger Test Workflow',
+      steps: [
+        {
+          stepKey: 'root-step',
+          handlerName: 'http-request',
+          inputConfig: { url: 'https://example.com' },
+          retryPolicy: { maxAttempts: 3, baseDelayMs: 1000 },
+          timeoutSeconds: 30,
+          dependsOn: [],
+        },
+        {
+          stepKey: 'child-step',
+          handlerName: 'transform-json',
+          inputConfig: {},
+          retryPolicy: { maxAttempts: 2, baseDelayMs: 500 },
+          timeoutSeconds: 10,
+          dependsOn: ['root-step'],
+        },
+      ],
+    };
+
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/workflows',
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'operator',
+        'x-mock-user-id': 'operator-user-123',
+      },
+      payload: wfPayload,
+    });
+    assert.strictEqual(createRes.statusCode, 201);
+    const newWorkflow = JSON.parse(createRes.body).data;
+    createdWorkflowIds.push(newWorkflow.id);
+
+    // Trigger the run
+    const triggerRes = await app.inject({
+      method: 'POST',
+      url: `/api/workflows/${newWorkflow.id}/runs`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'operator',
+        'x-mock-user-id': 'operator-user-123',
+      },
+      payload: { inputPayload: { source: 'integration-test' } },
+    });
+
+    assert.strictEqual(triggerRes.statusCode, 202);
+    const triggerBody = JSON.parse(triggerRes.body);
+    assert.ok(triggerBody.data.id, 'response must contain a run id');
+    assert.strictEqual(triggerBody.data.workflowId, newWorkflow.id);
+    assert.strictEqual(triggerBody.data.status, 'RUNNING');
+
+    // Root step QUEUED, child step PENDING
+    const rootStep = triggerBody.data.steps.find((s: { stepKey: string }) => s.stepKey === 'root-step');
+    const childStep = triggerBody.data.steps.find((s: { stepKey: string }) => s.stepKey === 'child-step');
+    assert.ok(rootStep, 'root-step must be present');
+    assert.ok(childStep, 'child-step must be present');
+    assert.strictEqual(rootStep.status, 'QUEUED');
+    assert.strictEqual(childStep.status, 'PENDING');
+
+    createdRunIds.push(triggerBody.data.id);
+  });
+
+  test('POST /api/workflows/:id/runs with nonexistent workflow → 404 WORKFLOW_NOT_FOUND', async () => {
+    const fakeId = crypto.randomUUID();
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/workflows/${fakeId}/runs`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'operator',
+      },
+      payload: {},
+    });
+
+    assert.strictEqual(res.statusCode, 404);
+    const body = JSON.parse(res.body);
+    assert.strictEqual(body.error.code, 'WORKFLOW_NOT_FOUND');
+  });
+
+  test('POST /api/workflows/:id/runs as viewer → 403 FORBIDDEN', async () => {
+    const fakeId = crypto.randomUUID();
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/workflows/${fakeId}/runs`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'viewer',
+      },
+      payload: {},
+    });
+
+    assert.strictEqual(res.statusCode, 403);
+    const body = JSON.parse(res.body);
+    assert.strictEqual(body.error.code, 'FORBIDDEN');
+  });
+
+  test('POST /api/workflows/:id/runs with non-object inputPayload → 422 VALIDATION_ERROR', async () => {
+    const fakeId = crypto.randomUUID();
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/workflows/${fakeId}/runs`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'operator',
+      },
+      payload: { inputPayload: 'not-an-object' },
+    });
+
+    assert.strictEqual(res.statusCode, 422);
+    const body = JSON.parse(res.body);
+    assert.strictEqual(body.error.code, 'VALIDATION_ERROR');
+  });
+
+  test('GET /api/runs/:id returns full run detail with workflowName, steps, stepKey, handlerName', async () => {
+    assert.ok(createdRunIds[0], 'A run must have been created in the trigger test');
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/runs/${createdRunIds[0]}`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'viewer',
+      },
+    });
+
+    assert.strictEqual(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+    const run = body.data;
+    assert.ok(run.workflowName, 'workflowName must be present');
+    assert.ok(Array.isArray(run.steps), 'steps must be an array');
+    assert.strictEqual(run.steps.length, 2);
+
+    const rootStep = run.steps.find((s: { stepKey: string }) => s.stepKey === 'root-step');
+    assert.ok(rootStep, 'root-step must be present');
+    assert.strictEqual(rootStep.handlerName, 'http-request');
+    assert.strictEqual(rootStep.stepKey, 'root-step');
+  });
+
+  test('GET /api/runs/:id with nonexistent id → 404 RUN_NOT_FOUND', async () => {
+    const fakeId = crypto.randomUUID();
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/runs/${fakeId}`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'viewer',
+      },
+    });
+
+    assert.strictEqual(res.statusCode, 404);
+    const body = JSON.parse(res.body);
+    assert.strictEqual(body.error.code, 'RUN_NOT_FOUND');
+  });
+
+  test('GET /api/runs returns a paginated list with correct shape', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/runs?page=1&limit=10',
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'viewer',
+      },
+    });
+
+    assert.strictEqual(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+    assert.ok(Array.isArray(body.data.items), 'items must be an array');
+    assert.ok(typeof body.data.total === 'number', 'total must be a number');
+    assert.strictEqual(body.data.page, 1);
+    assert.strictEqual(body.data.limit, 10);
+    assert.ok(body.data.total >= 1, 'At least one run must exist');
+  });
+
+  test('GET /api/runs?status=RUNNING returns only RUNNING runs', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/runs?status=RUNNING',
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'viewer',
+      },
+    });
+
+    assert.strictEqual(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+    for (const item of body.data.items as Array<{ status: string }>) {
+      assert.strictEqual(item.status, 'RUNNING');
+    }
+  });
+
+  test('GET /api/workflows/:id/runs returns runs scoped to workflow', async () => {
+    const workflowId = createdWorkflowIds[createdWorkflowIds.length - 1];
+    assert.ok(workflowId, 'A workflow must exist for scoped listing');
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/workflows/${workflowId}/runs`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'viewer',
+      },
+    });
+
+    assert.strictEqual(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+    assert.ok(Array.isArray(body.data.items));
+    assert.ok(body.data.total >= 1);
+
+    // All items must belong to the specified workflow
+    for (const item of body.data.items as Array<{ workflowId: string }>) {
+      assert.strictEqual(item.workflowId, workflowId);
+    }
+  });
+
+  test('POST /api/workflows/:id/runs inserts an audit log row with workflowId and inputPayloadSize', async () => {
+    const runId = createdRunIds[0];
+    assert.ok(runId, 'A run must have been created in the trigger test');
+
+    const auditRes = await pool.query(
+      `SELECT actor_id, action, resource_id, metadata
+       FROM audit_logs
+       WHERE resource_id = $1 AND action = 'run.trigger'
+       LIMIT 1`,
+      [runId]
+    );
+
+    assert.strictEqual(auditRes.rows.length, 1, 'Audit log row must exist');
+    const auditRow = auditRes.rows[0];
+    assert.strictEqual(auditRow.action, 'run.trigger');
+    assert.strictEqual(auditRow.actor_id, 'operator-user-123');
+    assert.ok(auditRow.metadata.workflowId, 'metadata must contain workflowId');
+    assert.ok(typeof auditRow.metadata.inputPayloadSize === 'number', 'metadata must contain inputPayloadSize as number');
+  });
 });
+
