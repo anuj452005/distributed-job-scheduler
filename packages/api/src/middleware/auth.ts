@@ -5,6 +5,7 @@ import type { UserRole } from '@flowforge/shared';
 declare module 'fastify' {
   interface FastifyRequest {
     userRole: UserRole | null;
+    userId: string | null;
   }
 }
 
@@ -18,9 +19,11 @@ export const requireAuth: preHandlerHookHandler = async (request, reply) => {
     if (authHeader === 'Bearer invalid') {
       return reply.code(401).send({ error: { code: 'UNAUTHORIZED', message: 'Invalid token' } });
     }
-    // Set role based on header or default to operator
+    // Set role and userId from headers (or defaults)
     const mockRole = (request.headers['x-mock-role'] as UserRole) ?? 'operator';
+    const mockUserId = (request.headers['x-mock-user-id'] as string) ?? 'mock-user-id';
     request.userRole = mockRole;
+    request.userId = mockUserId;
     return;
   }
 
@@ -29,8 +32,9 @@ export const requireAuth: preHandlerHookHandler = async (request, reply) => {
     return reply.code(401).send({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
   }
 
-  // Attach role from publicMetadata
+  // Attach role from publicMetadata and set userId
   const publicMetadata = auth.sessionClaims?.publicMetadata as { role?: string } | undefined;
   const role = (publicMetadata?.role as UserRole) ?? null;
   request.userRole = role;
+  request.userId = auth.userId;
 };

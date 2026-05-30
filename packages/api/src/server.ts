@@ -4,9 +4,15 @@ import cors from '@fastify/cors';
 import { config } from './config.js';
 import { errorHandler } from './error-handler.js';
 import { healthRoutes } from './routes/health.js';
-import { workflowRoutes } from './routes/workflows.js';
+import { workflowRoutes } from './routes/workflows/index.js';
+import { handlerRegistry, registerAllHandlers } from '@flowforge/handlers';
 
 export async function buildServer(): Promise<FastifyInstance> {
+  // Register all workflow handlers for DAG validation (guard against double-registration)
+  if (handlerRegistry.getAll().length === 0) {
+    registerAllHandlers();
+  }
+
   const app = Fastify({
     logger: {
       transport: process.env.NODE_ENV === 'test' ? undefined : {

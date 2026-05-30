@@ -4,13 +4,24 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Unit 11 fully built, verified, and compiled. Ready for Unit 12.
+- Unit 12 fully built, verified, and compiled. Ready for Unit 13.
 
 ## Current Goal
 
-- Unit 12: Workflows and Steps CRUD routes.
+- Unit 13: Run trigger and run management routes.
 
 ## Completed
+
+- **Unit 12 — Workflow CRUD API**
+  - Replaced monolithic `routes/workflows.ts` stub with modular route folder `routes/workflows/` containing individual handlers for `create`, `list`, `get`, `update`, and `delete`.
+  - Implemented full `workflow-service.ts` service layer with transactional `createWorkflow`, `listWorkflows`, `getWorkflow`, `updateWorkflow`, and `deleteWorkflow` DB operations.
+  - `createWorkflow` and `updateWorkflow` run inside DB transactions inserting workflows, steps, and dependency edges atomically.
+  - `deleteWorkflow` blocks deletion of workflows with active `RUNNING` runs (returns `409 CONFLICT`) and cascades deletion of completed `workflow_runs` before removing the workflow.
+  - All mutation routes (`POST`, `PUT`, `DELETE`) insert audit log rows into `audit_logs` with `actor_id`, `action`, `resource_id`, and `metadata`.
+  - DAG validation via `@flowforge/engine` `validateWorkflowDag()` runs at save time for both create and update, returning field-level `422` errors for cycles, unregistered handlers, bad retry policy bounds, etc.
+  - `requireAuth` middleware extended to attach `request.userId` (alongside existing `request.userRole`) to avoid double-calling `getAuth()` in route handlers (which crashes in test env without Clerk plugin).
+  - `registerAllHandlers()` call in `server.ts` guarded with a length check to prevent double-registration.
+  - Written comprehensive 13-test integration suite against real Neon DB covering all CRUD paths, DAG validation errors, role guards, audit log verification, and deletion conflict checks (13/13 passing).
 
 - **Unit 11 — API Foundation & Auth**
   - Configured `@flowforge/api` package using Fastify v5, CORS, and monorepo dependencies.
@@ -92,12 +103,11 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- None. Ready for Unit 11.
+- None. Ready for Unit 13.
 
 ## Next Up
 
-- Unit 11 — API Foundation Package (`11-api-foundation.md`)
-
+- Unit 13 — Run trigger and run management routes (`13-run-trigger-api.md`)
 
 ## Open Questions
 
