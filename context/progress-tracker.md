@@ -4,14 +4,22 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Implementation in progress. Unit 08 fully built, verified, and compiled.
+- Implementation in progress. Unit 09 fully built, verified, and compiled.
 
 ## Current Goal
 
-- Unit 09: Events Package
+- Unit 10: Engine Package
 
 ## Completed
 
+- **Unit 09 — Events Package (Redis Pub/Sub)**
+  - Configured `@flowforge/events` with standard ESM module architecture (`"type": "module"`) and monorepo dependencies.
+  - Implemented dynamic Redis client setup in `redis-client.ts` supporting standard connection config and robust fallback to in-memory `ioredis-mock` for testing/fallback environments.
+  - Created standardized Channel & Key naming utility structure in `channels.ts`.
+  - Implemented fire-and-forget `publishStepEvent` in `publish.ts` with try/catch wrapper preventing Redis failures from throwing or crashing.
+  - Developed standard subscription and unsubscription hook logic in `subscribe.ts` for run-specific events (`subscribeToRunEvents`) and global updates (`subscribeToGlobalEvents`).
+  - Implemented clean entrypoint exports and fully comprehensive test suite `index.test.ts` (5/5 tests passing successfully).
+  - Verified package typechecking, integration tests, and monorepo workspace compiling cleanly.
 
 - **Unit 08 — Scheduler & Lease Sweeper**
   - Configured `@flowforge/scheduler` with standard ESM module architecture (`"type": "module"`) and monorepo dependencies.

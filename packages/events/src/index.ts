@@ -1,2 +1,5 @@
-// Unit 01 stub — implementation added in later units
-export {};
+export { publisher, subscriber } from './redis-client.js';
+export { CHANNEL_GLOBAL, runChannel, workerHeartbeatKey } from './channels.js';
+export { publishStepEvent } from './publish.js';
+export { subscribeToRunEvents, subscribeToGlobalEvents } from './subscribe.js';
+export type { EventCallback } from './subscribe.js';
