@@ -4,13 +4,14 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Implementation in progress. Unit 03 fully built, verified, and compiled.
+- Implementation in progress. Unit 06 fully built, verified, and compiled.
 
 ## Current Goal
 
-- Unit 04: DB Package & Connection Pool
+- Unit 07: Worker Process
 
 ## Completed
+
 
 - Build plan written: `flowforge/context/specs/00-build-plan.md`
 - Unit specs written: `01` through `23` in `flowforge/context/specs/`
@@ -34,15 +35,27 @@ Update this file after every meaningful implementation change.
   - Defined standard database table row structures (`WorkflowRow`, `WorkflowStepRow`, etc.) in `packages/shared/src/entities.ts`.
   - Defined serializable camelCase API DTO request/response bodies in `packages/shared/src/dto.ts`.
   - Re-exported all sub-modules from the entrypoint `packages/shared/src/index.ts` and successfully verified compilation of the entire workspace monorepo.
-
+- **Unit 04 — DB Package & Connection Pool**
+  - Developed `@flowforge/db` package with a single PostgreSQL connection pool exported as `db`.
+  - Built a migration runner that loads SQL files sequentially and executes them within a single transaction on startup.
+- **Unit 05 — Queue SQL Package**
+  - Developed `@flowforge/queue` package encapsulating all raw concurrency-critical SQL queries.
+  - Implemented concurrent-safe task claiming (`claimStepRun`) using PostgreSQL row-level locks (`SELECT FOR UPDATE SKIP LOCKED`).
+  - Added lease maintenance (`heartbeatStepRun`), worker crash recovery (`sweepLeases`), and workflow execution chain progression (`promoteStepRun`).
+- **Unit 06 — Handler Registry & Core Handlers**
+  - Built `@flowforge/handlers` package including a central, duplicate-safe `HandlerRegistry` for mapping task keys to async handlers.
+  - Created strict Zod schema validation files for all 7 core step handlers.
+  - Implemented fully functional `http-request` (with native `AbortSignal.any()` combining timeout and cooperative cancellation signals) and `transform-json` (utilizing JSONata evaluation) handlers.
+  - Added structured MVP stubs for `send-email`, `sql-query`, `blob-to-postgres`, `repo-indexer`, and `embedding-generator` with Pino child logging and cancellation guards.
+  - Wrote comprehensive unit test suite in `index.test.ts` checking all behaviors (15/15 tests passing) and verified workspace compile & build compatibility.
 
 ## In Progress
 
-- None. Ready for Unit 04.
+- None. Ready for Unit 07.
 
 ## Next Up
 
-- Unit 04 — DB Package & Connection Pool (`04-db-package.md`)
+- Unit 07 — Worker Process (`07-worker.md`)
 
 
 ## Open Questions

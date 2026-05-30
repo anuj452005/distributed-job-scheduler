@@ -2,10 +2,20 @@
   "name": "@flowforge/handlers",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/index.test.ts"
+  },
+  "dependencies": {
+    "@flowforge/shared": "*",
+    "jsonata": "^2.0.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.1"
   }
 }
