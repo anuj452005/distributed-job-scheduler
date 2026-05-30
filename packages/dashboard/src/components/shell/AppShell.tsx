@@ -1,0 +1,38 @@
+import { useAuth, RedirectToSignIn } from '@clerk/react';
+import { Outlet } from 'react-router-dom';
+import TopNav from './TopNav.tsx';
+import Sidebar from './Sidebar.tsx';
+
+export default function AppShell() {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (!isLoaded) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[var(--bg-base)] text-[var(--text-secondary)]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent-primary)] border-t-transparent"></div>
+          <span className="text-xs font-medium tracking-wider uppercase font-sans">Loading Workspace...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <RedirectToSignIn />;
+  }
+
+  return (
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--bg-base)] text-[var(--text-primary)]">
+      {/* TopNav (48px) */}
+      <TopNav />
+      
+      {/* Sidebar + Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto bg-[var(--bg-base)] p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+:root {
+  /* Base Surfaces */
+  --bg-base:             #0a0c10;
+  --bg-surface:          #111318;
+  --bg-surface-raised:   #181c24;
+  --bg-surface-hover:    #1e2330;
+  --bg-surface-active:   #242a38;
+  --border-default:      #1f2535;
+  --border-subtle:       #161b28;
+  --border-strong:       #2e3650;
+
+  /* Text */
+  --text-primary:        #e8ecf4;
+  --text-secondary:      #8b95b0;
+  --text-muted:          #4f5a74;
+  --text-inverse:        #0a0c10;
+  --text-mono:           #c5cfe8;
+
+  /* Accent */
+  --accent-primary:        #4f7eff;
+  --accent-primary-hover:  #3d6ae6;
+  --accent-primary-subtle: #1a2a52;
+  --accent-primary-border: #2d4a99;
+
+  /* Status — all 9 states */
+  --state-pending-text:   #6b7a99; --state-pending-bg:   #131720; --state-pending-border:   #1e2535;
+  --state-queued-text:    #7c8fff; --state-queued-bg:    #141828; --state-queued-border:    #2a3470;
+  --state-running-text:   #38bdf8; --state-running-bg:   #0d1f2d; --state-running-border:   #1a4060;
+  --state-succeeded-text: #34d399; --state-succeeded-bg: #0d2420; --state-succeeded-border: #1a4a38;
+  --state-failed-text:    #f87171; --state-failed-bg:    #2a1010; --state-failed-border:    #6b2020;
+  --state-retrying-text:  #fb923c; --state-retrying-bg:  #251608; --state-retrying-border:  #6b3a10;
+  --state-dlq-text:       #e879f9; --state-dlq-bg:       #200d25; --state-dlq-border:       #5c1a6b;
+  --state-cancelled-text: #94a3b8; --state-cancelled-bg: #141820; --state-cancelled-border: #2a2f40;
+  --state-cancel-req-text:#fbbf24; --state-cancel-req-bg:#231a06; --state-cancel-req-border:#6b4e10;
+
+  /* Log levels */
+  --log-debug: #4f5a74;
+  --log-info:  #38bdf8;
+  --log-warn:  #fbbf24;
+  --log-error: #f87171;
+
+  /* Danger */
+  --danger-text:         #f87171;
+  --danger-bg:           #2a1010;
+  --danger-border:       #6b2020;
+  --danger-action:       #dc2626;
+  --danger-action-hover: #b91c1c;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Border radius */
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   10px;
+  --radius-full: 9999px;
+
+  /* Type scale */
+  --text-xl: 20px;
+  --text-lg: 16px;
+  --text-md: 14px;
+  --text-sm: 13px;
+  --text-xs: 12px;
+
+  /* Map Shadcn / Tailwind v4 variables to FlowForge design tokens */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-surface-raised);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-primary);
+  --primary-foreground: var(--text-inverse);
+  --secondary: var(--bg-surface-active);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-surface-hover);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--bg-surface-hover);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--danger-action);
+  --destructive-foreground: var(--text-primary);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--accent-primary);
+  --radius: var(--radius-lg);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  height: 100%;
+  width: 100%;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-surface-raised: var(--bg-surface-raised);
+  --color-bg-surface-hover: var(--bg-surface-hover);
+  --color-bg-surface-active: var(--bg-surface-active);
+  --color-border-default: var(--border-default);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverse: var(--text-inverse);
+  --color-text-mono: var(--text-mono);
+  
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-primary-hover: var(--accent-primary-hover);
+  --color-accent-primary-subtle: var(--accent-primary-subtle);
+  --color-accent-primary-border: var(--accent-primary-border);
+
+  /* Shadcn CSS variable mappings for Tailwind v4 build compatibility */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
