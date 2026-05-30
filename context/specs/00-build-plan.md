@@ -42,7 +42,7 @@
 
 | # | Unit Name | File | What It Delivers |
 |---|-----------|------|------------------|
-| 01 | Repo Scaffold & Docker Compose | `01-repo-scaffold.md` | Runnable monorepo skeleton; `docker compose up` starts postgres + redis |
+| 01 | Repo Scaffold & Docker Compose | `01-repo-scaffold.md` | Runnable monorepo skeleton; `docker compose up` starts `api` + `worker` (PostgreSQL and Redis are Azure-managed — no local containers) |
 | 02 | Database Schema & Migrations | `02-db-schema.md` | All tables, indexes, constraints — tested via `psql` |
 | 03 | Shared Types Package | `03-shared-types.md` | `packages/shared` with all status enums, DTOs, `StepContext`, `StepHandler` |
 | 04 | DB Package & Connection Pool | `04-db-package.md` | `packages/db` pool + migration runner; migrations applied on startup |
