@@ -1,2 +1,2 @@
-// Unit 01 stub — implementation added in later units
-export {};
+export { pool } from './pool.js';
+export { runMigrations } from './migrate.js';

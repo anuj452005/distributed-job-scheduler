@@ -8,6 +8,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "migrate": "npm run migrate --workspace=packages/db",
     "dev:api": "npm run dev --workspace=packages/api",
     "dev:worker": "npm run dev --workspace=packages/worker",
     "dev:dashboard": "npm run dev --workspace=packages/dashboard"
