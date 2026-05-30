@@ -4,17 +4,24 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Implementation in progress. Unit 06 fully built, verified, and compiled.
+- Implementation in progress. Unit 07 fully built, verified, and compiled.
 
 ## Current Goal
 
-- Unit 07: Worker Process
+- Unit 08: Scheduler Process
 
 ## Completed
 
 
 - Build plan written: `flowforge/context/specs/00-build-plan.md`
 - Unit specs written: `01` through `23` in `flowforge/context/specs/`
+- **Unit 07 — Worker Process**
+  - Configured `@flowforge/worker` package.json and Dockerfile for monorepo imports and ESM support.
+  - Implemented `worker-id.ts` for stable process name generation.
+  - Developed `graceful-shutdown.ts` offering standard cooperative handler cancellation on SIGTERM/SIGINT signals.
+  - Created `lease-heartbeat.ts` providing timer-based DB lease updates with automated abort callbacks.
+  - Built `poll-loop.ts` driving standard atomic claiming, handling dispatching, fencing token commits, downstream step promotions, and parent workflow run completion checks.
+  - Orchestrated and verified all packages compiling and building cleanly (10/10 workspaces successfully verified).
 - **Unit 01 — Repo Scaffold & Docker Compose**
   - Scaffolded npm workspaces monorepo at `flowforge/` containing 10 packages.
   - Configured shared `tsconfig.base.json` with strict ES2022/NodeNext options.
