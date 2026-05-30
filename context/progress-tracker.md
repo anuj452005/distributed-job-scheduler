@@ -4,13 +4,22 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Implementation in progress. Unit 09 fully built, verified, and compiled.
+- Unit 10 fully built, verified, and compiled. Ready for API implementation.
 
 ## Current Goal
 
-- Unit 10: Engine Package
+- Unit 11: API Foundation Package (`11-api-foundation.md`)
 
 ## Completed
+
+- **Unit 10 — Engine Package (Orchestration Brain)**
+  - Implemented Kahn's algorithm for topological sorting in `topological-sort.ts` to sort workflow steps and detect cyclic dependencies.
+  - Implemented DAG validator in `dag-validator.ts` covering duplicate step keys, handler existence, dependency references, retry policy bounds, and timeout limits.
+  - Implemented transactional workflow run and step run creation in `run-creator.ts` and `step-pre-creator.ts`.
+  - Implemented replay execution starting from a custom step in `replay.ts` by performing downstream traversal, pre-completing prior successful steps, and promoting active replay points.
+  - Implemented transaction-safe cooperative run cancellation in `cancel.ts`.
+  - Built a comprehensive test suite `index.test.ts` (10/10 tests passing cleanly).
+
 
 - **Unit 09 — Events Package (Redis Pub/Sub)**
   - Configured `@flowforge/events` with standard ESM module architecture (`"type": "module"`) and monorepo dependencies.
@@ -73,11 +82,11 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- None. Ready for Unit 07.
+- None. Ready for Unit 11.
 
 ## Next Up
 
-- Unit 07 — Worker Process (`07-worker.md`)
+- Unit 11 — API Foundation Package (`11-api-foundation.md`)
 
 
 ## Open Questions
