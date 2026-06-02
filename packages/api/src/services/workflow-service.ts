@@ -260,7 +260,14 @@ export async function updateWorkflow(
     );
     const workflow = workflowRes.rows[0];
 
-    // 3. Delete old steps (dependencies are deleted automatically by ON DELETE CASCADE)
+    // 3a. Delete existing runs (which cascades to step_runs and step_logs)
+    // This is required because step_runs references workflow_steps without ON DELETE CASCADE
+    await client.query(
+      `DELETE FROM workflow_runs WHERE workflow_id = $1`,
+      [id]
+    );
+
+    // 3b. Delete old steps (dependencies are deleted automatically by ON DELETE CASCADE)
     await client.query(
       `DELETE FROM workflow_steps WHERE workflow_id = $1`,
       [id]

@@ -35,6 +35,14 @@ export async function buildServer(): Promise<FastifyInstance> {
     origin: '*',
   });
 
+  // Extract token from query parameter for SSE EventSource support before Clerk auth hook runs
+  app.addHook('onRequest', async (request, reply) => {
+    const query = request.query as { token?: string } | undefined;
+    if (query?.token) {
+      request.headers.authorization = `Bearer ${query.token}`;
+    }
+  });
+
   // Clerk JWT verification plugin
   if (process.env.NODE_ENV !== 'test') {
     await app.register(clerkPlugin, {

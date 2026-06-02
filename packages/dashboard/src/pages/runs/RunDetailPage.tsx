@@ -157,34 +157,43 @@ export default function RunDetailPage() {
           {/* Core Content: Left side list, Center DAG Canvas, Right Drawer */}
           <div className="flex flex-1 gap-4 overflow-hidden relative">
             {/* Column 1: Step list (240px wide, hidden on mobile or small devices) */}
-            <div className="hidden lg:flex w-[240px] flex-col gap-3 shrink-0 border-r border-[var(--border-default)] pr-4 overflow-y-auto">
-              <span className="font-sans text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-1.5 select-none">
-                <List className="h-3.5 w-3.5" />
+            <div className="hidden lg:flex w-[240px] flex-col gap-3 shrink-0 border-r border-white/[0.04] pr-4 overflow-y-auto">
+              <span className="font-sans text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-1.5 select-none bg-white/[0.02] border border-white/[0.04] px-2.5 py-1 rounded w-fit">
+                <List className="h-3.5 w-3.5 text-[var(--accent-primary)]" />
                 Pipeline Steps
               </span>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 {run.steps.map((step) => {
                   const isSelected = step.id === selectedStepId;
                   return (
                     <button
                       key={step.id}
                       onClick={() => setSelectedStepId(step.id)}
-                      className={`cursor-pointer w-full text-left p-3 rounded-[var(--radius-md)] border font-sans text-xs flex flex-col gap-1.5 transition-all duration-150 ${
+                      className={`cursor-pointer w-full text-left p-3.5 rounded-[var(--radius-lg)] border font-sans text-xs flex flex-col gap-2 relative transition-all duration-200 select-none ${
                         isSelected
-                          ? 'bg-[var(--accent-primary-subtle)] border-[var(--accent-primary-border)] shadow-md'
-                          : 'bg-[var(--bg-surface)] border-[var(--border-default)] hover:bg-[var(--bg-surface-hover)] hover:border-[var(--border-strong)]'
+                          ? 'bg-gradient-to-r from-[var(--accent-primary-subtle)] to-[var(--bg-surface-raised)] border-[var(--accent-primary-border)] shadow-lg shadow-black/35 translate-x-0.5'
+                          : 'bg-[var(--bg-surface)] border-[var(--border-default)] hover:bg-[var(--bg-surface-hover)] hover:border-[var(--border-strong)] hover:shadow-md'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-1 w-full">
-                        <span className="font-mono text-xs font-bold truncate max-w-[120px]" title={step.stepKey}>
+                      {/* Left indicator strip for selected/active step */}
+                      {isSelected && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-[var(--radius-lg)] bg-[var(--accent-primary)]" />
+                      )}
+
+                      <div className="flex items-center justify-between gap-1 w-full pl-0.5">
+                        <span className="font-mono text-xs font-bold truncate max-w-[110px] text-[var(--text-primary)]" title={step.stepKey}>
                           {step.stepKey}
                         </span>
                         <StepStatusBadge status={step.status} />
                       </div>
-                      <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)] font-mono">
-                        <span className="truncate max-w-[110px]" title={step.handlerName}>{step.handlerName}</span>
-                        <span className="text-[var(--text-muted)] font-semibold shrink-0">Try: {step.attemptCount}x</span>
+                      <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)] font-mono pl-0.5 pt-1.5 border-t border-white/[0.02]">
+                        <span className="truncate max-w-[100px] font-medium" title={step.handlerName}>
+                          {step.handlerName}
+                        </span>
+                        <span className="text-[var(--text-muted)] font-semibold shrink-0 bg-black/20 px-1.5 py-0.5 rounded border border-white/[0.03]">
+                          Try: {step.attemptCount}x
+                        </span>
                       </div>
                     </button>
                   );

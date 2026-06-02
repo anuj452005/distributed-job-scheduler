@@ -92,6 +92,42 @@
   --radius: var(--radius-lg);
 }
 
+
+/* Custom Scrollbars for a polished, seamless premium feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Custom visual utility classes for premium dark UI */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(17, 19, 24, 0.85) 0%, rgba(24, 28, 36, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.glow-card {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glow-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -8px rgba(79, 126, 255, 0.2);
+  border-color: rgba(79, 126, 255, 0.35);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -178,3 +214,34 @@ html, body {
   from { transform: translateY(-20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* Premium ReactFlow Glowing Edge Animation & Styles */
+.react-flow__edge-path.animated {
+  stroke-dasharray: 6 6;
+  animation: react-flow-dash 1.2s linear infinite;
+  filter: drop-shadow(0 0 4px var(--state-running-text)) drop-shadow(0 0 1px var(--state-running-text));
+}
+
+@keyframes react-flow-dash {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Pulsing glow animation for active running nodes */
+@keyframes nodePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--state-running-border), 0 4px 12px rgba(56, 189, 248, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--state-running-text), 0 8px 24px rgba(56, 189, 248, 0.45);
+  }
+}
+
+.running-node-pulse {
+  animation: nodePulse 2s infinite ease-in-out;
+}
+

@@ -3,7 +3,7 @@ import { apiClient } from './client.ts';
 export interface StepInput {
   stepKey: string;
   handlerName: string;
-  inputConfig: Record<string, any>;
+  inputConfig: Record<string, unknown>;
   retryPolicy: { maxAttempts: number; baseDelayMs: number };
   timeoutSeconds: number;
   dependsOn: string[];
@@ -33,16 +33,37 @@ export interface PaginatedList<T> {
 }
 
 export interface TriggerRunBody {
-  inputPayload?: Record<string, any>;
+  inputPayload?: Record<string, unknown>;
+}
+
+export interface WorkflowStepRunDto {
+  id: string;
+  stepId: string;
+  stepKey: string;
+  handlerName: string;
+  status: string;
+  attemptCount: number;
+  maxAttempts: number;
+  inputPayload: Record<string, unknown>;
+  outputPayload: Record<string, unknown> | null;
+  errorMessage: string | null;
+  workerId: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
 }
 
 export interface WorkflowRunDto {
   id: string;
   workflowId: string;
   status: string;
+  inputPayload: Record<string, unknown>;
+  originalRunId: string | null;
   triggeredBy: string;
+  startedAt: string | null;
+  completedAt: string | null;
   createdAt: string;
-  completedAt?: string;
+  steps: WorkflowStepRunDto[];
 }
 
 export async function getWorkflows(
@@ -73,6 +94,10 @@ export async function createWorkflow(body: CreateWorkflowBody, token: string): P
 
 export async function deleteWorkflow(id: string, token: string): Promise<void> {
   await apiClient<void>('DELETE', `/api/workflows/${id}`, undefined, token);
+}
+
+export async function updateWorkflow(id: string, body: CreateWorkflowBody, token: string): Promise<WorkflowDto> {
+  return apiClient<WorkflowDto>('PUT', `/api/workflows/${id}`, body, token);
 }
 
 export async function triggerWorkflowRun(

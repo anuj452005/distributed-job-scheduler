@@ -9,8 +9,35 @@ interface StepCardProps {
   allStepKeys: string[];
   onChange: (field: keyof StepInput, value: any) => void;
   onRemove: () => void;
-  errors?: Record<string, string>; // Maps field name to error message, e.g., 'dependsOn' => 'Creates a cycle with step-a'
+  errors?: Record<string, string>;
 }
+
+const HANDLER_TEMPLATES: Record<string, Record<string, unknown>> = {
+  'transform-json': { expression: '{ "result": value }', input: { value: 'sample' } },
+  'http-request': { url: 'https://example.com', method: 'GET', timeoutMs: 10000, throwOnError: true },
+  'send-email': { connectionRef: 'smtp-main', to: ['user@example.com'], subject: 'Hello', body: 'Email content here.' },
+  'sql-query': { connectionRef: 'primary-db', query: 'SELECT * FROM users LIMIT 10;', params: [] },
+  'blob-to-postgres': {
+    sourceConnectionRef: 'source-blob',
+    targetConnectionRef: 'target-postgres',
+    blobPath: 'imports/file.csv',
+    targetTable: 'my_table',
+    columnMapping: { name: 'full_name' },
+    batchSize: 500,
+  },
+  'repo-indexer': { repoUrl: 'https://github.com/owner/repo', branch: 'main' },
+  'embedding-generator': { connectionRef: 'openai-main', text: 'content to embed', model: 'text-embedding-ada-002' },
+};
+
+const HANDLER_HINTS: Record<string, string> = {
+  'http-request': 'Required: url. Optional: method (GET/POST/PUT/DELETE), headers (object), body (object).',
+  'send-email': 'Required: connectionRef, to array, subject, body.',
+  'sql-query': 'Required: connectionRef, query. Optional: params array.',
+  'blob-to-postgres': 'Required: sourceConnectionRef, targetConnectionRef, blobPath, targetTable, columnMapping.',
+  'transform-json': 'Required: expression and input. This evaluates JSONata against the input object.',
+  'repo-indexer': 'Required: repoUrl. Optional: branch and outputDir.',
+  'embedding-generator': 'Required: connectionRef and text. Optional: model.',
+};
 
 export default function StepCard({
   index,
@@ -23,15 +50,17 @@ export default function StepCard({
   const [jsonText, setJsonText] = useState(() => JSON.stringify(step.inputConfig, null, 2));
   const [jsonError, setJsonError] = useState<string | null>(null);
 
-  const handlers = [
-    'http-request',
-    'send-email',
-    'sql-query',
-    'blob-to-postgres',
-    'transform-json',
-    'repo-indexer',
-    'embedding-generator',
-  ];
+  const handlers = Object.keys(HANDLER_TEMPLATES);
+
+  const handleHandlerChange = (newHandler: string) => {
+    onChange('handlerName', newHandler);
+    // Auto-populate the payload template for this handler
+    const template = HANDLER_TEMPLATES[newHandler] ?? {};
+    const templateStr = JSON.stringify(template, null, 2);
+    setJsonText(templateStr);
+    onChange('inputConfig', template);
+    setJsonError(null);
+  };
 
   const handleJsonChange = (val: string) => {
     setJsonText(val);
@@ -94,7 +123,7 @@ export default function StepCard({
             type="text"
             value={step.stepKey}
             onChange={(e) => onChange('stepKey', e.target.value)}
-            placeholder="e.g., query_customer_db"
+            placeholder="e.g., fetch_user_data"
             className={`p-2 font-mono text-xs text-[var(--text-mono)] bg-[var(--bg-base)] border rounded-[var(--radius-md)] outline-none focus:border-[var(--accent-primary)] transition-all ${
               errors.stepKey ? 'border-[var(--danger-border)]' : 'border-[var(--border-default)]'
             }`}
@@ -114,7 +143,7 @@ export default function StepCard({
           </label>
           <select
             value={step.handlerName}
-            onChange={(e) => onChange('handlerName', e.target.value)}
+            onChange={(e) => handleHandlerChange(e.target.value)}
             className="p-2 font-sans text-xs bg-[var(--bg-base)] border border-[var(--border-default)] focus:border-[var(--accent-primary)] rounded-[var(--radius-md)] outline-none text-[var(--text-primary)]"
           >
             {handlers.map((h) => (
@@ -140,7 +169,7 @@ export default function StepCard({
           <input
             type="number"
             min={1}
-            max={20}
+            max={10}
             value={step.retryPolicy.maxAttempts}
             onChange={(e) =>
               onChange('retryPolicy', {
@@ -158,7 +187,7 @@ export default function StepCard({
           <input
             type="number"
             min={100}
-            step={500}
+            step={100}
             value={step.retryPolicy.baseDelayMs}
             onChange={(e) =>
               onChange('retryPolicy', {
@@ -176,7 +205,7 @@ export default function StepCard({
           <input
             type="number"
             min={5}
-            step={30}
+            step={1}
             value={step.timeoutSeconds}
             onChange={(e) => onChange('timeoutSeconds', parseInt(e.target.value) || 300)}
             className="p-2 font-mono text-xs text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-[var(--radius-md)] outline-none text-center"
@@ -229,11 +258,17 @@ export default function StepCard({
           value={jsonText}
           onChange={(e) => handleJsonChange(e.target.value)}
           onBlur={handleJsonBlur}
-          placeholder='{&#10;  "url": "https://api.example.com",&#10;  "method": "POST"&#10;}'
-          className={`w-full h-24 p-2.5 font-mono text-xs text-[var(--text-mono)] bg-[var(--bg-base)] border rounded-[var(--radius-md)] outline-none resize-y transition-all ${
+          className={`w-full h-28 p-2.5 font-mono text-xs text-[var(--text-mono)] bg-[var(--bg-base)] border rounded-[var(--radius-md)] outline-none resize-y transition-all ${
             jsonError ? 'border-[var(--danger-border)] focus:border-[var(--danger-border)]' : 'border-[var(--border-default)] focus:border-[var(--accent-primary)]'
           }`}
         />
+        {/* Handler-specific hint */}
+        {HANDLER_HINTS[step.handlerName] && (
+          <span className="font-sans text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-0.5">
+            <Info className="h-3 w-3 shrink-0 text-[var(--accent-primary)]" />
+            {HANDLER_HINTS[step.handlerName]}
+          </span>
+        )}
       </div>
 
     </div>

@@ -2,6 +2,7 @@ import { Plus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import type { StepInput } from '../../api/workflows.ts';
 import StepCard from './StepCard.tsx';
+import { createTransformStep } from './workflow-presets.ts';
 
 interface StepBuilderProps {
   steps: StepInput[];
@@ -17,20 +18,7 @@ export default function StepBuilder({
   const allStepKeys = steps.map((s) => s.stepKey);
 
   const handleAddStep = () => {
-    // Generate next unique key index
-    const codeA = 'a'.charCodeAt(0);
-    const nextChar = String.fromCharCode(codeA + (steps.length % 26));
-    const suggestedKey = `step-${nextChar}`;
-    
-    const newStep: StepInput = {
-      stepKey: suggestedKey,
-      handlerName: 'http-request',
-      inputConfig: {},
-      retryPolicy: { maxAttempts: 3, baseDelayMs: 1000 },
-      timeoutSeconds: 300,
-      dependsOn: [],
-    };
-    onChange([...steps, newStep]);
+    onChange([...steps, createTransformStep(allStepKeys)]);
   };
 
   const handleRemoveStep = (index: number) => {

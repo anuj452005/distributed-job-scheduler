@@ -49,10 +49,9 @@ export default function WorkflowsPage() {
       const newRun = await triggerWorkflowRun(id, { inputPayload: {} }, token);
       showToast(`Dispatched run for ${name}: ${newRun.id.substring(0, 8)}`);
       
-      // Redirect to runs overview screen to witness processing
-      setTimeout(() => navigate('/runs'), 1000);
+      setTimeout(() => navigate(`/runs/${newRun.id}`), 1000);
     } catch (err: any) {
-      alert(`Trigger Failed: ${err.message}`);
+      setError(`Failed to trigger workflow "${name}": ${err.message || 'Unknown error'}`);
     }
   };
 

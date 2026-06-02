@@ -14,7 +14,7 @@ export const WorkerHealthPanel: React.FC<WorkerHealthPanelProps> = ({
   const isWarning = activeWorkers === 0 && queueDepth > 0;
 
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 select-none">
+    <div className="glass-panel rounded-xl p-5 select-none shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {isHealthy ? (

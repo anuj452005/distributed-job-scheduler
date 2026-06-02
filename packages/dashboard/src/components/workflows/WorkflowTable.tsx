@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GitBranch, Play, Trash2, Search, Calendar } from 'lucide-react';
+import { GitBranch, Play, Trash2, Search, Calendar, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import type { WorkflowDto } from '../../api/workflows.ts';
 
@@ -159,6 +159,15 @@ export default function WorkflowTable({
                           <Play className={`h-3 w-3 shrink-0 ${triggeringId === wf.id ? 'animate-pulse' : ''}`} />
                           {triggeringId === wf.id ? 'Triggering...' : 'Trigger'}
                         </Button>
+                        <Link to={`/workflows/${wf.id}/edit`} className="outline-none">
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            className="text-[var(--text-secondary)] hover:bg-[var(--bg-surface-active)] hover:text-[var(--text-primary)] border border-transparent flex items-center gap-1.5 rounded-[var(--radius-md)] p-1.5 transition-colors"
+                          >
+                            <Pencil className="h-3.5 w-3.5 shrink-0" />
+                          </Button>
+                        </Link>
                         <Button
                           onClick={() => onDelete(wf.id, wf.name)}
                           size="xs"

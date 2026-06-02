@@ -4,6 +4,7 @@ import SignInPage from './pages/SignInPage.tsx';
 import DashboardHomePage from './pages/DashboardHomePage.tsx';
 import WorkflowsPage from './pages/workflows/WorkflowsPage.tsx';
 import WorkflowCreatePage from './pages/workflows/WorkflowCreatePage.tsx';
+import WorkflowEditPage from './pages/workflows/WorkflowEditPage.tsx';
 import WorkflowDetailPage from './pages/workflows/WorkflowDetailPage.tsx';
 import RunsListPage from './pages/runs/RunsListPage.tsx';
 import RunDetailPage from './pages/runs/RunDetailPage.tsx';
@@ -34,6 +35,10 @@ export const router = createBrowserRouter([
       {
         path: 'workflows/:id',
         element: <WorkflowDetailPage />,
+      },
+      {
+        path: 'workflows/:id/edit',
+        element: <WorkflowEditPage />,
       },
       {
         path: 'runs',

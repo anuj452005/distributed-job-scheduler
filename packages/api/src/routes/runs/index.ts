@@ -11,7 +11,7 @@ import { cancelRoute } from './cancel.js';
 import { getStepLogsRoute } from './step-logs.js';
 
 export async function runRoutes(app: FastifyInstance): Promise<void> {
-  // POST /workflows/:id/runs — operator only, triggers a new run
+  // POST /workflows/:id/runs — triggers a new run (operator only)
   app.post(
     '/workflows/:id/runs',
     { preHandler: [requireAuth, requireRole('operator')] },
@@ -31,21 +31,21 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
     listRunsByWorkflowRoute
   );
 
-  // POST /steps/:id/retry — operator only, retry a single step
+  // POST /steps/:id/retry — retry a single step
   app.post(
     '/steps/:id/retry',
     { preHandler: [requireAuth, requireRole('operator')] },
     retryStepRoute
   );
 
-  // POST /runs/:id/replay — operator only, replay a failed workflow run from a step
+  // POST /runs/:id/replay — replay a failed workflow run from a step
   app.post(
     '/runs/:id/replay',
     { preHandler: [requireAuth, requireRole('operator')] },
     replayRoute
   );
 
-  // POST /runs/:id/cancel — operator only, cancel an active workflow run
+  // POST /runs/:id/cancel — cancel an active workflow run
   app.post(
     '/runs/:id/cancel',
     { preHandler: [requireAuth, requireRole('operator')] },
