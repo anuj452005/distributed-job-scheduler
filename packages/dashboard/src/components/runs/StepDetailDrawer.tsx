@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { X, Play, RefreshCw, Cpu, Clock, Terminal, ChevronDown, ChevronRight, FileJson } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, Cpu, FileJson, Play, RefreshCw, Terminal, X } from 'lucide-react';
 import { StepStatusBadge } from './StepStatusBadge.tsx';
 import { LogViewer } from './LogViewer.tsx';
 import type { StepRunDto } from '../../api/runs.ts';
 
-interface StepDetailDrawerProps {
+type StepDetailDrawerProps = {
   step: StepRunDto;
   onClose: () => void;
   onRetry: (stepRunId: string) => Promise<void>;
   onReplay: (stepKey: string) => Promise<void>;
   isReadOnly: boolean;
-}
+};
 
 export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
   step,
@@ -28,8 +28,6 @@ export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
     setIsRetrying(true);
     try {
       await onRetry(step.id);
-    } catch (err) {
-      console.error(err);
     } finally {
       setIsRetrying(false);
     }
@@ -39,8 +37,6 @@ export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
     setIsReplaying(true);
     try {
       await onReplay(step.stepKey);
-    } catch (err) {
-      console.error(err);
     } finally {
       setIsReplaying(false);
     }
@@ -48,84 +44,80 @@ export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
 
   const isTerminal = ['SUCCEEDED', 'FAILED', 'DEAD_LETTERED', 'CANCELLED'].includes(step.status.toUpperCase());
   const canRetry = step.status.toUpperCase() === 'DEAD_LETTERED' || step.status.toUpperCase() === 'FAILED';
-  const isCurrentlyRunning = ['RUNNING', 'RETURING', 'QUEUED'].includes(step.status.toUpperCase());
+  const isCurrentlyRunning = ['RUNNING', 'RETRYING', 'QUEUED'].includes(step.status.toUpperCase());
 
   return (
-    <div className="fixed top-12 bottom-0 right-0 z-40 w-full max-w-[400px] bg-[var(--bg-surface-raised)]/95 backdrop-blur-md border-l border-white/[0.04] flex flex-col shadow-2xl animate-[slideInRight_0.2s_ease-out] select-none h-[calc(100vh-48px)]">
-      {/* Header */}
-      <div className="p-5 border-b border-white/[0.04] flex items-center justify-between bg-black/20 backdrop-blur-sm">
+    <div className="fixed bottom-0 right-0 top-12 z-40 flex h-[calc(100vh-48px)] w-full max-w-[400px] flex-col border-l border-[var(--border-default)] bg-[var(--bg-surface-raised)] select-none animate-[slideInRight_0.2s_ease-out]">
+      <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-surface)] p-5">
         <div className="flex flex-col gap-1">
-          <span className="font-sans text-[10px] text-[var(--text-muted)] font-extrabold uppercase tracking-wider bg-white/[0.02] border border-white/[0.04] px-2 py-0.5 rounded w-fit">
+          <span className="w-fit rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-surface-raised)] px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
             Step Details
           </span>
-          <h2 className="font-mono text-sm font-extrabold text-[var(--text-primary)] break-all max-w-[260px] tracking-tight mt-1">
+          <h2 className="mt-1 max-w-[260px] break-all font-mono text-sm font-semibold text-[var(--text-primary)]">
             {step.stepKey}
           </h2>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)] break-all mt-0.5">
+          <span className="mt-0.5 break-all font-mono text-[10px] text-[var(--text-secondary)]">
             Handler: {step.handlerName}
           </span>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex shrink-0 items-center gap-2.5">
           <StepStatusBadge status={step.status} />
           <button
             onClick={onClose}
-            className="cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/[0.05] p-1.5 rounded-lg transition-colors border border-transparent hover:border-white/[0.03]"
+            className="cursor-pointer rounded-[var(--radius-md)] border border-transparent p-1.5 text-[var(--text-secondary)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* Content Body (Scrollable) */}
-      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
-        {/* Metadata section */}
-        <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 flex flex-col gap-3 shadow-inner">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-[var(--text-secondary)] flex items-center gap-1.5">
+      <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
+        <div className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
+          <div className="flex items-center justify-between font-mono text-xs">
+            <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
               <Clock className="h-3.5 w-3.5 text-[var(--accent-primary)]" />
               Attempts
             </span>
-            <span className="text-[var(--text-primary)] font-bold bg-white/[0.02] px-2 py-0.5 rounded border border-white/[0.04]">
+            <span className="rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-surface-raised)] px-2 py-0.5 font-bold text-[var(--text-primary)]">
               {step.attemptCount} / {step.maxAttempts}
             </span>
           </div>
 
           {step.workerId && (
-            <div className="flex items-center justify-between text-xs font-mono border-t border-white/[0.03] pt-3">
-              <span className="text-[var(--text-secondary)] flex items-center gap-1.5">
+            <div className="flex items-center justify-between border-t border-[var(--border-subtle)] pt-3 font-mono text-xs">
+              <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
                 <Cpu className="h-3.5 w-3.5 text-[var(--accent-primary)]" />
                 Worker Node
               </span>
-              <span className="text-[var(--text-mono)] max-w-[180px] truncate bg-black/20 px-2 py-0.5 rounded border border-white/[0.03]" title={step.workerId}>
+              <span className="max-w-[180px] truncate rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-surface-raised)] px-2 py-0.5 text-[var(--text-mono)]" title={step.workerId}>
                 {step.workerId}
               </span>
             </div>
           )}
 
           {step.startedAt && (
-            <div className="flex items-center justify-between text-xs font-mono border-t border-white/[0.03] pt-3">
+            <div className="flex items-center justify-between border-t border-[var(--border-subtle)] pt-3 font-mono text-xs">
               <span className="text-[var(--text-secondary)]">Started At</span>
-              <span className="text-[var(--text-muted)] font-medium">
+              <span className="font-medium text-[var(--text-muted)]">
                 {new Date(step.startedAt).toLocaleTimeString()}
               </span>
             </div>
           )}
 
           {step.completedAt && (
-            <div className="flex items-center justify-between text-xs font-mono border-t border-white/[0.03] pt-3">
+            <div className="flex items-center justify-between border-t border-[var(--border-subtle)] pt-3 font-mono text-xs">
               <span className="text-[var(--text-secondary)]">Completed At</span>
-              <span className="text-[var(--text-muted)] font-medium">
+              <span className="font-medium text-[var(--text-muted)]">
                 {new Date(step.completedAt).toLocaleTimeString()}
               </span>
             </div>
           )}
         </div>
 
-        {/* Input Payload Accordion */}
-        <div className="border border-white/[0.04] rounded-xl overflow-hidden shadow-sm bg-white/[0.01] hover:bg-white/[0.02] transition-colors">
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
           <button
             onClick={() => setShowInput(!showInput)}
-            className="cursor-pointer w-full p-3.5 flex items-center justify-between text-xs font-sans font-semibold text-[var(--text-primary)] transition-all duration-200"
+            className="flex w-full cursor-pointer items-center justify-between p-3.5 font-sans text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-surface-hover)]"
           >
             <span className="flex items-center gap-2">
               <FileJson className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
@@ -134,20 +126,19 @@ export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
             {showInput ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           </button>
           {showInput && (
-            <div className="bg-black/35 p-3.5 border-t border-white/[0.03]">
-              <pre className="font-mono text-[10px] text-[var(--text-mono)] overflow-x-auto max-h-[180px] p-3 rounded-lg bg-black/55 border border-white/[0.02] shadow-inner select-text">
+            <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-base)] p-3.5">
+              <pre className="max-h-[180px] overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-base)] p-3 font-mono text-[10px] text-[var(--text-mono)] select-text">
                 {JSON.stringify(step.inputPayload, null, 2)}
               </pre>
             </div>
           )}
         </div>
 
-        {/* Output Payload Accordion (Succeeded only) */}
         {step.status.toUpperCase() === 'SUCCEEDED' && step.outputPayload && (
-          <div className="border border-white/[0.04] rounded-xl overflow-hidden shadow-sm bg-white/[0.01] hover:bg-white/[0.02] transition-colors">
+          <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
             <button
               onClick={() => setShowOutput(!showOutput)}
-              className="cursor-pointer w-full p-3.5 flex items-center justify-between text-xs font-sans font-semibold text-[var(--text-primary)] transition-all duration-200"
+              className="flex w-full cursor-pointer items-center justify-between p-3.5 font-sans text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-surface-hover)]"
             >
               <span className="flex items-center gap-2">
                 <FileJson className="h-3.5 w-3.5 text-[var(--state-succeeded-text)]" />
@@ -156,8 +147,8 @@ export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
               {showOutput ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </button>
             {showOutput && (
-              <div className="bg-black/35 p-3.5 border-t border-white/[0.03]">
-                <pre className="font-mono text-[10px] text-[var(--text-mono)] overflow-x-auto max-h-[180px] p-3 rounded-lg bg-black/55 border border-white/[0.02] shadow-inner select-text">
+              <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-base)] p-3.5">
+                <pre className="max-h-[180px] overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-base)] p-3 font-mono text-[10px] text-[var(--text-mono)] select-text">
                   {JSON.stringify(step.outputPayload, null, 2)}
                 </pre>
               </div>
@@ -165,21 +156,19 @@ export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
           </div>
         )}
 
-        {/* Error Block */}
         {(step.status.toUpperCase() === 'FAILED' || step.status.toUpperCase() === 'DEAD_LETTERED') && step.errorMessage && (
-          <div className="rounded-xl border border-[var(--danger-border)]/60 bg-gradient-to-r from-[var(--danger-bg)] to-transparent p-4 flex flex-col gap-2 shadow-[0_4px_12px_rgba(239,68,68,0.1)]">
-            <span className="font-sans text-[10px] font-extrabold text-[var(--danger-text)] uppercase tracking-wider bg-black/20 border border-[var(--danger-border)]/30 px-2 py-0.5 rounded w-fit">
+          <div className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4">
+            <span className="w-fit rounded-[var(--radius-sm)] border border-[var(--danger-border)] bg-[var(--danger-bg)] px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wider text-[var(--danger-text)]">
               Execution Error
             </span>
-            <p className="font-mono text-xs text-[var(--text-primary)] break-words leading-relaxed whitespace-pre-wrap select-text">
+            <p className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-[var(--text-primary)] select-text">
               {step.errorMessage}
             </p>
           </div>
         )}
 
-        {/* Structured Log Terminal */}
         <div className="flex flex-col gap-2.5">
-          <span className="font-sans text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-1.5 select-none bg-white/[0.02] border border-white/[0.04] px-2.5 py-1 rounded w-fit">
+          <span className="flex w-fit items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2.5 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] select-none">
             <Terminal className="h-3.5 w-3.5 text-[var(--accent-primary)]" />
             Step Console Telemetry
           </span>
@@ -187,14 +176,13 @@ export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
         </div>
       </div>
 
-      {/* Action Footer (Sticky) */}
       {!isReadOnly && isTerminal && (
-        <div className="p-5 border-t border-white/[0.04] bg-black/20 backdrop-blur-md flex gap-3 shrink-0 shadow-lg">
+        <div className="flex shrink-0 gap-3 border-t border-[var(--border-default)] bg-[var(--bg-surface)] p-5">
           {canRetry && (
             <button
               onClick={handleRetry}
               disabled={isRetrying}
-              className="cursor-pointer flex-1 py-2.5 px-3 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] disabled:bg-opacity-50 text-[var(--text-inverse)] rounded-[var(--radius-md)] text-xs font-bold font-sans flex items-center justify-center gap-1.5 shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--accent-primary)] px-3 py-2.5 font-sans text-xs font-bold text-[var(--text-inverse)] transition-colors hover:bg-[var(--accent-primary-hover)] disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isRetrying ? 'animate-spin' : ''}`} />
               Retry Failed Step
@@ -204,7 +192,7 @@ export const StepDetailDrawer: React.FC<StepDetailDrawerProps> = ({
           <button
             onClick={handleReplay}
             disabled={isReplaying}
-            className="cursor-pointer flex-1 py-2.5 px-3 border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] disabled:bg-opacity-50 text-[var(--text-primary)] rounded-[var(--radius-md)] text-xs font-bold font-sans flex items-center justify-center gap-1.5 shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 py-2.5 font-sans text-xs font-bold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-surface-hover)] disabled:opacity-50"
           >
             <Play className={`h-3.5 w-3.5 ${isReplaying ? 'animate-pulse' : ''}`} />
             Replay From Here

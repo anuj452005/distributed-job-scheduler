@@ -19,13 +19,11 @@ interface DesignNodeData extends Record<string, unknown> {
 
 const DesignNode: FC<{ data: DesignNodeData; selected?: boolean }> = ({ data, selected }) => (
   <div
-    className="min-w-[180px] rounded-[var(--radius-lg)] border p-3 pl-4 flex flex-col gap-1.5 select-none shadow-md transition-all duration-200 relative"
+    className="relative flex min-w-[180px] flex-col gap-1.5 rounded-[var(--radius-lg)] border p-3 pl-4 select-none"
     style={{
       backgroundColor: 'var(--accent-primary-subtle)',
       borderColor: selected ? 'var(--accent-primary)' : 'var(--accent-primary-border)',
-      boxShadow: selected
-        ? '0 0 0 2px var(--accent-primary), 0 8px 20px rgba(79,126,255,0.25)'
-        : '0 4px 12px rgba(0,0,0,0.3)',
+      boxShadow: selected ? '0 0 0 2px var(--accent-primary)' : undefined,
     }}
   >
     <Handle type="target" position={Position.Left} style={{ visibility: 'hidden' }} />

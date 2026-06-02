@@ -111,7 +111,7 @@ export default function RunsPage() {
           <span className="text-xs text-[var(--text-secondary)] font-mono uppercase tracking-wider">Syncing executions...</span>
         </div>
       ) : error ? (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-6 text-[var(--danger-text)] flex gap-3 items-start max-w-2xl shadow-xl">
+        <div className="flex max-w-2xl items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-6 text-[var(--danger-text)]">
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
           <div className="flex flex-col gap-1">
             <h4 className="font-sans text-sm font-semibold">Connection Refused</h4>
@@ -124,7 +124,7 @@ export default function RunsPage() {
       ) : runs.length === 0 ? (
         /* Empty State */
         <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-16 flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full relative overflow-hidden group">
-          <div className="h-14 w-14 rounded-full bg-[var(--bg-surface-hover)] border border-[var(--border-default)] flex items-center justify-center mb-5 shadow-inner">
+          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-[var(--radius-full)] border border-[var(--border-default)] bg-[var(--bg-surface-hover)]">
             <Play className="h-6 w-6 text-[var(--text-secondary)]" strokeWidth={1.5} />
           </div>
           <h3 className="font-sans text-[var(--text-lg)] font-bold text-[var(--text-primary)] mb-2">
@@ -136,7 +136,7 @@ export default function RunsPage() {
         </div>
       ) : (
         /* Runs list */
-        <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] overflow-hidden shadow-2xl">
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>

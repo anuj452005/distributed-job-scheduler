@@ -3,12 +3,12 @@ import { Ban, RefreshCw } from 'lucide-react';
 import { StepStatusBadge } from './StepStatusBadge.tsx';
 import type { WorkflowRunDetailDto } from '../../api/runs.ts';
 
-interface RunStatusBarProps {
+type RunStatusBarProps = {
   run: WorkflowRunDetailDto;
   onCancel: () => Promise<void>;
   onReplayAll: () => Promise<void>;
   isReadOnly: boolean;
-}
+};
 
 export const RunStatusBar: React.FC<RunStatusBarProps> = ({
   run,
@@ -27,8 +27,6 @@ export const RunStatusBar: React.FC<RunStatusBarProps> = ({
       setCancelling(true);
       try {
         await onCancel();
-      } catch (err) {
-        console.error(err);
       } finally {
         setCancelling(false);
       }
@@ -40,8 +38,6 @@ export const RunStatusBar: React.FC<RunStatusBarProps> = ({
       setReplaying(true);
       try {
         await onReplayAll();
-      } catch (err) {
-        console.error(err);
       } finally {
         setReplaying(false);
       }
@@ -49,27 +45,26 @@ export const RunStatusBar: React.FC<RunStatusBarProps> = ({
   };
 
   return (
-    <div className="glass-panel rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 select-none shadow-[0_8px_32px_rgba(0,0,0,0.45)]">
-      {/* Title / Info */}
+    <div className="flex flex-col justify-between gap-5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 select-none sm:flex-row sm:items-center">
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-3">
-          <span className="font-sans text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider bg-white/[0.02] border border-white/[0.04] px-2 py-0.5 rounded">
+          <span className="rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-surface-raised)] px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
             Execution Flow
           </span>
-          <span className="font-mono text-xs text-[var(--text-secondary)] bg-black/20 px-2 py-0.5 rounded border border-white/[0.03]">
+          <span className="rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-base)] px-2 py-0.5 font-mono text-xs text-[var(--text-secondary)]">
             Run ID: {run.id}
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-3 mt-1">
-          <h2 className="font-sans text-[var(--text-lg)] font-extrabold text-[var(--text-primary)] tracking-tight">
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <h2 className="font-sans text-[var(--text-lg)] font-semibold text-[var(--text-primary)]">
             {run.workflowName}
           </h2>
-          <span className="text-[var(--text-muted)] font-sans text-xs select-none">•</span>
+          <span className="font-sans text-xs text-[var(--text-muted)] select-none">/</span>
           <StepStatusBadge status={run.status} />
           {run.originalRunId && (
             <>
-              <span className="text-[var(--text-muted)] font-sans text-xs select-none">•</span>
-              <span className="font-mono text-[10px] text-[var(--accent-primary)] bg-[var(--accent-primary-subtle)] border border-[var(--accent-primary-border)] px-2.5 py-0.5 rounded-[var(--radius-sm)] shadow-inner">
+              <span className="font-sans text-xs text-[var(--text-muted)] select-none">/</span>
+              <span className="rounded-[var(--radius-sm)] border border-[var(--accent-primary-border)] bg-[var(--accent-primary-subtle)] px-2.5 py-0.5 font-mono text-[10px] text-[var(--accent-primary)]">
                 Replayed from {run.originalRunId.substring(0, 8)}
               </span>
             </>
@@ -77,14 +72,13 @@ export const RunStatusBar: React.FC<RunStatusBarProps> = ({
         </div>
       </div>
 
-      {/* Operator controls */}
       {!isReadOnly && (
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex shrink-0 items-center gap-2.5">
           {isActive && (
             <button
               onClick={handleCancel}
               disabled={cancelling}
-              className="cursor-pointer py-2 px-4 bg-[var(--danger-action)] hover:bg-[var(--danger-action-hover)] disabled:bg-opacity-50 text-[var(--text-primary)] border border-[var(--danger-border)] rounded-[var(--radius-md)] text-xs font-semibold font-sans flex items-center gap-2 shadow-lg transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] border border-[var(--danger-border)] bg-[var(--danger-action)] px-4 py-2 font-sans text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--danger-action-hover)] disabled:opacity-50"
             >
               <Ban className={`h-3.5 w-3.5 ${cancelling ? 'animate-pulse' : ''}`} />
               Cancel Run
@@ -95,7 +89,7 @@ export const RunStatusBar: React.FC<RunStatusBarProps> = ({
             <button
               onClick={handleReplayAll}
               disabled={replaying}
-              className="cursor-pointer py-2 px-4 border border-[var(--border-strong)] bg-white/[0.02] hover:bg-white/[0.06] disabled:bg-opacity-50 text-[var(--text-primary)] rounded-[var(--radius-md)] text-xs font-semibold font-sans flex items-center gap-2 shadow-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-2 font-sans text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-surface-hover)] disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${replaying ? 'animate-spin' : ''}`} />
               Replay From Start

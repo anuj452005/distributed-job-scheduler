@@ -4,6 +4,21 @@ import { RunStatusFilter } from './RunStatusFilter.tsx';
 import { Calendar, Play, Clock, User, ArrowRight } from 'lucide-react';
 import type { RunSummaryDto } from '../../api/runs.ts';
 
+const getStatusColor = (s: string) => {
+  switch (s.toUpperCase()) {
+    case 'PENDING': return 'var(--state-pending-text)';
+    case 'QUEUED': return 'var(--state-queued-text)';
+    case 'RUNNING':
+    case 'CLAIMED': return 'var(--state-running-text)';
+    case 'SUCCEEDED':
+    case 'COMPLETED': return 'var(--state-succeeded-text)';
+    case 'FAILED': return 'var(--state-failed-text)';
+    case 'RETRYING': return 'var(--state-retrying-text)';
+    case 'DEAD_LETTERED': return 'var(--state-dlq-text)';
+    default: return 'var(--border-default)';
+  }
+};
+
 interface RecentRunsTableProps {
   runs: RunSummaryDto[];
   loading: boolean;
@@ -109,17 +124,17 @@ export const RecentRunsTable: React.FC<RecentRunsTableProps> = ({
           </p>
         </div>
       ) : (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] overflow-hidden shadow-xl border-collapse">
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[var(--border-default)] bg-[var(--bg-surface-hover)]">
-                  <th className="p-3 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Run ID / Workflow</th>
-                  <th className="p-3 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider text-center">Status</th>
-                  <th className="p-3 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Triggered By</th>
-                  <th className="p-3 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Triggered At</th>
-                  <th className="p-3 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Duration</th>
-                  <th className="p-3 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider text-center">Action</th>
+                  <th className="p-2.5 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider pl-4">Run ID / Workflow</th>
+                  <th className="p-2.5 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider text-center">Status</th>
+                  <th className="p-2.5 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Triggered By</th>
+                  <th className="p-2.5 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Triggered At</th>
+                  <th className="p-2.5 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Duration</th>
+                  <th className="p-2.5 text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
@@ -127,40 +142,45 @@ export const RecentRunsTable: React.FC<RecentRunsTableProps> = ({
                   <tr
                     key={run.id}
                     onClick={() => navigate(`/runs/${run.id}`)}
-                    className="hover:bg-[var(--bg-surface-hover)] transition-all cursor-pointer group"
+                    className="hover:bg-[var(--bg-surface-hover)] transition-all cursor-pointer group h-11"
                   >
-                    <td className="p-3">
+                    <td className="p-2 pl-5 relative">
+                      {/* Colored status left indicator strip */}
+                      <div 
+                        className="absolute left-0 top-1 bottom-1 w-1 rounded-r transition-colors duration-200" 
+                        style={{ backgroundColor: getStatusColor(run.status) }}
+                      />
                       <div className="flex flex-col gap-0.5">
                         <span className="font-mono text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors">
                           {run.id.substring(0, 8)}
                         </span>
-                        <span className="font-sans text-[11px] text-[var(--text-secondary)]">
+                        <span className="font-sans text-[11px] text-[var(--text-secondary)] font-medium">
                           {run.workflowName}
                         </span>
                       </div>
                     </td>
-                    <td className="p-3 text-center">
+                    <td className="p-2 text-center">
                       <StepStatusBadge status={run.status} />
                     </td>
-                    <td className="p-3">
+                    <td className="p-2">
                       <span className="font-mono text-[11px] text-[var(--text-secondary)] bg-[var(--bg-surface-raised)] border border-[var(--border-default)] px-1.5 py-0.5 rounded flex items-center gap-1 w-fit">
                         <User className="h-3 w-3" />
                         {run.triggeredBy}
                       </span>
                     </td>
-                    <td className="p-3">
+                    <td className="p-2">
                       <div className="flex flex-col gap-0.5 font-sans text-xs text-[var(--text-secondary)]">
-                        <span>{getRelativeTime(run.createdAt)}</span>
+                        <span className="font-medium">{getRelativeTime(run.createdAt)}</span>
                         <span className="text-[10px] text-[var(--text-muted)] font-mono">{new Date(run.createdAt).toLocaleTimeString()}</span>
                       </div>
                     </td>
-                    <td className="p-3 font-mono text-xs text-[var(--text-secondary)]">
+                    <td className="p-2 font-mono text-xs text-[var(--text-secondary)]">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5 text-[var(--text-muted)]" />
                         {getDuration(run.startedAt, run.completedAt)}
                       </span>
                     </td>
-                    <td className="p-3 text-center">
+                    <td className="p-2 text-center">
                       <div className="flex items-center justify-center">
                         <span className="h-7 w-7 rounded-full bg-[var(--bg-surface-raised)] border border-[var(--border-default)] group-hover:bg-[var(--accent-primary-subtle)] group-hover:border-[var(--accent-primary-border)] flex items-center justify-center transition-all">
                           <ArrowRight className="h-3.5 w-3.5 text-[var(--text-secondary)] group-hover:text-[var(--accent-primary)] transition-colors" />

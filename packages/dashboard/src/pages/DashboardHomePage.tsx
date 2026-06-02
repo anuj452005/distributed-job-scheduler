@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/react';
-import { LayoutDashboard, Cpu, Clock, ShieldAlert, ListOrdered } from 'lucide-react';
+import { Clock, Cpu, LayoutDashboard, ListOrdered, ShieldAlert } from 'lucide-react';
 import { MetricCard } from '../components/dashboard/MetricCard.tsx';
 import { MetricCardGrid } from '../components/dashboard/MetricCardGrid.tsx';
 import { WorkerHealthPanel } from '../components/dashboard/WorkerHealthPanel.tsx';
 import { RecentRunsTable } from '../components/dashboard/RecentRunsTable.tsx';
+import { LiveEventStream } from '../components/dashboard/LiveEventStream.tsx';
 import { getStats } from '../api/stats.ts';
 import { getRuns } from '../api/runs.ts';
 import { useGlobalSSE } from '../hooks/useSSE.ts';
@@ -18,18 +19,15 @@ export default function DashboardHomePage() {
     activeWorkers: 0,
     dlqDepth: 0,
     jobsLastHour: 0,
-    failureRate: 0.0,
+    failureRate: 0,
   });
   const [runs, setRuns] = useState<RunSummaryDto[]>([]);
   const [loadingRuns, setLoadingRuns] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Filter States
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  // 1. Fetch system stats aggregates
   const loadStats = async () => {
     try {
       const token = await getToken();
@@ -41,24 +39,21 @@ export default function DashboardHomePage() {
     }
   };
 
-  // 2. Fetch recent runs list (up to 20 items, sorted by createdAt DESC)
   const loadRuns = async (showLoading = false) => {
     if (showLoading) setLoadingRuns(true);
     try {
       const token = await getToken();
       if (!token) return;
-      // Fetch runs list with active status and date filters
       const data = await getRuns(token, 1, 20, selectedStatus, fromDate, toDate);
       setRuns(data.items);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch active job worker runs');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch workflow runs');
     } finally {
       if (showLoading) setLoadingRuns(false);
     }
   };
 
-  // 3. Trigger initial loads and setup background interval polling (refresh stats every 30s, runs every 60s)
   useEffect(() => {
     loadStats();
     loadRuns(true);
@@ -72,9 +67,7 @@ export default function DashboardHomePage() {
     };
   }, [selectedStatus, fromDate, toDate]);
 
-  // 4. SSE Subscription for Real-time run status updates without full table page refresh
   useGlobalSSE((event) => {
-    // If the event represents a workflow run status change, update the matching run row status!
     if (
       event.type === 'workflow.completed' ||
       event.type === 'workflow.failed' ||
@@ -83,99 +76,114 @@ export default function DashboardHomePage() {
     ) {
       setRuns((prevRuns) =>
         prevRuns.map((run) =>
-          run.id === event.workflowRunId
-            ? { ...run, status: event.status }
-            : run
-        )
+          run.id === event.workflowRunId ? { ...run, status: event.status } : run,
+        ),
       );
-
-      // Re-fetch stats as terminal events affect aggregates
       loadStats();
     }
   }, () => {
-    // On SSE gateway reconnect / reset, trigger REST re-fetch of stats and runs list
     loadStats();
     loadRuns(false);
   });
 
   return (
     <div className="flex flex-col gap-6 select-none animate-[fadeIn_0.2s_ease-out]">
-      {/* Page Header */}
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
         <div>
-          <h1 className="font-sans text-[var(--text-xl)] font-bold text-[var(--text-primary)] flex items-center gap-2">
+          <h1 className="flex items-center gap-2 font-sans text-[var(--text-xl)] font-semibold text-[var(--text-primary)]">
             <LayoutDashboard className="h-5 w-5 text-[var(--accent-primary)]" strokeWidth={1.5} />
             Telemetry Console
           </h1>
-          <p className="font-sans text-[var(--text-xs)] text-[var(--text-secondary)] mt-1">
-            Real-time telemetry, queue depth aggregates, worker health checks, and recent job runs.
+          <p className="mt-1 font-sans text-[var(--text-xs)] text-[var(--text-secondary)]">
+            Queue depth, worker activity, recent job runs, and live gateway events.
           </p>
-        </div>
-        <div className="flex items-center gap-2 rounded-full bg-[var(--state-succeeded-bg)] border border-[var(--state-succeeded-border)] px-2.5 py-1 text-[11px] font-medium text-[var(--state-succeeded-text)] shadow-sm">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--state-succeeded-text)] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--state-succeeded-text)]"></span>
-          </span>
-          System Operational
         </div>
       </div>
 
-      {/* Stats Cards Dashboard Grid */}
+      {(stats.dlqDepth > 0 || stats.failureRate > 0) && (
+        <div className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 animate-[slideIn_0.3s_ease-out]">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[var(--danger-text)]" />
+          <div className="flex w-full flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-[var(--danger-text)]">
+                Operational warning
+              </span>
+              <span className="rounded-[var(--radius-sm)] border border-[var(--danger-border)] bg-[var(--danger-bg)] px-2 py-0.5 font-mono text-[9px] font-bold text-[var(--danger-text)]">
+                {stats.dlqDepth} DLQ active
+              </span>
+            </div>
+            <p className="mt-1.5 font-sans text-xs leading-relaxed text-[var(--text-primary)]">
+              Dead-lettered or failed executions are present. Review the affected runs before retrying or replaying.
+            </p>
+          </div>
+        </div>
+      )}
+
       <MetricCardGrid>
         <MetricCard
           label="Queue Depth"
           value={stats.queueDepth}
           icon={<ListOrdered />}
           color="var(--state-queued-text)"
-          description="Pending steps waiting in queue"
+          description="Steps waiting to be claimed"
         />
         <MetricCard
           label="Active Workers"
           value={stats.activeWorkers}
           icon={<Cpu />}
           color="var(--state-running-text)"
-          description="Nodes claiming executing steps"
+          description="Workers currently executing steps"
         />
         <MetricCard
           label="Jobs Last Hour"
           value={stats.jobsLastHour}
           icon={<Clock />}
           color="var(--state-succeeded-text)"
-          description="Succeeded job steps in last 1 hour"
+          description="Succeeded job steps in the last hour"
         />
         <MetricCard
           label="Failure Rate"
           value={`${(stats.failureRate * 100).toFixed(1)}%`}
           icon={<ShieldAlert />}
           color={stats.dlqDepth > 0 ? 'var(--state-dlq-text)' : 'var(--text-muted)'}
-          description={`${stats.dlqDepth} terminal DLQ steps active`}
+          description={`${stats.dlqDepth} terminal DLQ step${stats.dlqDepth === 1 ? '' : 's'} active`}
         />
       </MetricCardGrid>
 
-      {/* Worker Health panel */}
-      <WorkerHealthPanel activeWorkers={stats.activeWorkers} queueDepth={stats.queueDepth} />
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+        <div className="flex flex-col gap-6 lg:col-span-8">
+          <WorkerHealthPanel activeWorkers={stats.activeWorkers} queueDepth={stats.queueDepth} />
 
-      {/* Recent runs list */}
-      <div className="flex flex-col gap-3">
-        <h2 className="font-sans text-[var(--text-lg)] font-semibold text-[var(--text-primary)]">
-          Recent Workflow Executions
-        </h2>
-        {error ? (
-          <div className="rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 text-[var(--danger-text)] text-xs font-sans">
-            {error}
+          <div className="flex flex-col gap-3">
+            <h2 className="font-sans text-[var(--text-lg)] font-semibold text-[var(--text-primary)]">
+              Recent Workflow Executions
+            </h2>
+            {error ? (
+              <div className="rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 font-sans text-xs text-[var(--danger-text)]">
+                {error}
+              </div>
+            ) : (
+              <RecentRunsTable
+                runs={runs}
+                loading={loadingRuns}
+                selectedStatus={selectedStatus}
+                onStatusChange={setSelectedStatus}
+                fromDate={fromDate}
+                onFromDateChange={setFromDate}
+                toDate={toDate}
+                onToDateChange={setToDate}
+              />
+            )}
           </div>
-        ) : (
-          <RecentRunsTable
-            runs={runs}
-            loading={loadingRuns}
-            selectedStatus={selectedStatus}
-            onStatusChange={setSelectedStatus}
-            fromDate={fromDate}
-            onFromDateChange={setFromDate}
-            toDate={toDate}
-            onToDateChange={setToDate}
-          />
-        )}
+        </div>
+
+        <div className="flex flex-col gap-4 lg:col-span-4">
+          <h2 className="flex items-center gap-2 font-sans text-[var(--text-lg)] font-semibold text-[var(--text-primary)]">
+            <span className="h-2 w-2 rounded-full bg-[var(--accent-primary)]" />
+            Real-Time Gateway
+          </h2>
+          <LiveEventStream />
+        </div>
       </div>
     </div>
   );

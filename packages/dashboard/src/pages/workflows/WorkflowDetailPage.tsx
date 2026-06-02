@@ -69,7 +69,7 @@ export default function WorkflowDetailPage() {
               <Button
                 size="sm"
                 variant="outline"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--border-strong)] flex items-center gap-1.5 font-semibold px-4 shadow-sm active:scale-95 transition-all"
+                className="flex items-center gap-1.5 border-[var(--border-strong)] px-4 font-semibold text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
               >
                 <Pencil className="h-3.5 w-3.5 shrink-0" />
                 Edit Workflow
@@ -79,7 +79,7 @@ export default function WorkflowDetailPage() {
               onClick={handleTrigger}
               disabled={triggering}
               size="sm"
-              className="bg-[var(--accent-primary)] text-[var(--text-inverse)] hover:bg-[var(--accent-primary-hover)] flex items-center gap-1.5 text-xs font-semibold px-4 shadow-md active:scale-95 min-w-[130px] justify-center"
+              className="flex min-w-[130px] items-center justify-center gap-1.5 bg-[var(--accent-primary)] px-4 text-xs font-semibold text-[var(--text-inverse)] hover:bg-[var(--accent-primary-hover)]"
             >
               {triggering ? (
                 <span className="h-3.5 w-3.5 rounded-full border-2 border-[var(--text-inverse)] border-t-transparent animate-spin shrink-0" />
@@ -106,7 +106,7 @@ export default function WorkflowDetailPage() {
           <span className="text-xs text-[var(--text-secondary)] font-mono uppercase tracking-wider">Syncing details...</span>
         </div>
       ) : error || !workflow ? (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-6 text-[var(--danger-text)] flex gap-3 items-start shadow-xl">
+        <div className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-6 text-[var(--danger-text)]">
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
           <div className="flex flex-col gap-1">
             <h4 className="font-sans text-sm font-semibold">Failed to Retrieve Details</h4>

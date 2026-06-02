@@ -103,10 +103,10 @@ export const DagCanvas: FC<DagCanvasProps> = ({
         strokeColor = 'var(--state-running-text)';
         strokeWidth = 2.5;
       } else if (isSourceSucceeded) {
-        strokeColor = 'rgba(52, 211, 153, 0.35)'; // translucent emerald
+        strokeColor = 'var(--state-succeeded-border)';
         strokeWidth = 2;
       } else if (isSourceFailed) {
-        strokeColor = 'rgba(248, 113, 113, 0.35)'; // translucent crimson
+        strokeColor = 'var(--state-failed-border)';
         strokeWidth = 2;
       }
 
@@ -138,7 +138,7 @@ export const DagCanvas: FC<DagCanvasProps> = ({
   };
 
   return (
-    <div className="w-full h-full bg-[var(--bg-base)] border border-[var(--border-default)] rounded-[var(--radius-lg)] overflow-hidden select-none relative shadow-inner">
+    <div className="relative h-full w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-base)] select-none">
       {steps.length === 0 ? (
         <div className="flex h-full items-center justify-center">
           <span className="font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">No steps to visualize</span>
@@ -163,24 +163,24 @@ export const DagCanvas: FC<DagCanvasProps> = ({
           <Background color="var(--border-strong)" gap={16} size={1} />
           <Controls
             showInteractive={false}
-            className="!bg-[var(--bg-surface)] !border-[var(--border-default)] !rounded-[var(--radius-md)] !shadow-lg [&>button]:!border-b-[var(--border-subtle)] [&>button]:!text-[var(--text-secondary)] hover:[&>button]:!bg-[var(--bg-surface-hover)]"
+            className="!rounded-[var(--radius-md)] !border-[var(--border-default)] !bg-[var(--bg-surface)] [&>button]:!border-b-[var(--border-subtle)] [&>button]:!text-[var(--text-secondary)] hover:[&>button]:!bg-[var(--bg-surface-hover)]"
           />
           <MiniMap
             nodeColor={(n) => {
               const step = steps.find((s) => s.stepKey === n.id);
               if (!step) return 'var(--border-default)';
               switch (step.status.toUpperCase()) {
-                case 'PENDING': return '#131720';
-                case 'QUEUED': return '#141828';
-                case 'RUNNING': return '#0d1f2d';
-                case 'SUCCEEDED': return '#0d2420';
-                case 'FAILED': return '#2a1010';
-                case 'DEAD_LETTERED': return '#200d25';
+                case 'PENDING': return 'var(--state-pending-bg)';
+                case 'QUEUED': return 'var(--state-queued-bg)';
+                case 'RUNNING': return 'var(--state-running-bg)';
+                case 'SUCCEEDED': return 'var(--state-succeeded-bg)';
+                case 'FAILED': return 'var(--state-failed-bg)';
+                case 'DEAD_LETTERED': return 'var(--state-dlq-bg)';
                 default: return 'var(--bg-surface-raised)';
               }
             }}
-            maskColor="rgba(10, 12, 16, 0.7)"
-            className="!bg-[var(--bg-surface)] !border-[var(--border-default)] !rounded-[var(--radius-md)] !shadow-lg"
+            maskColor="var(--bg-base)"
+            className="!rounded-[var(--radius-md)] !border-[var(--border-default)] !bg-[var(--bg-surface)]"
             style={{ width: 120, height: 90 }}
           />
         </ReactFlow>

@@ -3,28 +3,26 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAuth } from '@clerk/react';
 import { apiClient } from '../../api/client.ts';
 
-export interface LogLineDto {
+export type LogLineDto = {
   id: string;
   level: string;
   message: string;
-  metadata: any;
+  metadata: unknown;
   createdAt: string;
-}
+};
 
-interface LogViewerProps {
+type LogViewerProps = {
   stepRunId: string;
-  isActive: boolean; // Is step currently running, to trigger auto-polling/refreshing logs
-}
+  isActive: boolean;
+};
 
 export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => {
   const { getToken } = useAuth();
   const [logs, setLogs] = useState<LogLineDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Virtualizer for high-performance rendering of potentially thousands of log lines
   const rowVirtualizer = useVirtualizer({
     count: logs.length,
     getScrollElement: () => parentRef.current,
@@ -34,7 +32,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => 
 
   useEffect(() => {
     let active = true;
-    let pollInterval: any = null;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
 
     const fetchLogs = async (showLoading = false) => {
       if (showLoading) setLoading(true);
@@ -46,9 +44,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => 
           setLogs(data);
           setError(null);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (active) {
-          setError(err.message || 'Failed to fetch logs');
+          setError(err instanceof Error ? err.message : 'Failed to fetch logs');
         }
       } finally {
         if (active && showLoading) setLoading(false);
@@ -57,7 +55,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => 
 
     fetchLogs(true);
 
-    // If step is active (running/queued/retrying), poll for logs every 2 seconds
     if (isActive) {
       pollInterval = setInterval(() => {
         fetchLogs(false);
@@ -70,7 +67,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => 
     };
   }, [stepRunId, isActive, getToken]);
 
-  // Scroll to bottom on initial load or when new logs arrive (if user was already at bottom)
   const prevLogsLength = useRef(logs.length);
   useEffect(() => {
     if (logs.length > prevLogsLength.current && parentRef.current) {
@@ -86,31 +82,31 @@ export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => 
   const getLogLevelStyle = (level: string) => {
     switch (level.toUpperCase()) {
       case 'DEBUG':
-        return 'text-slate-400 bg-slate-500/10 border border-slate-500/15';
+        return 'border-[var(--border-default)] bg-[var(--bg-surface-raised)] text-[var(--log-debug)]';
       case 'WARN':
       case 'WARNING':
-        return 'text-amber-400 bg-amber-500/10 border border-amber-500/15';
+        return 'border-[var(--state-cancel-req-border)] bg-[var(--state-cancel-req-bg)] text-[var(--log-warn)]';
       case 'ERROR':
       case 'FATAL':
-        return 'text-red-400 bg-red-500/10 border border-red-500/15';
+        return 'border-[var(--danger-border)] bg-[var(--danger-bg)] text-[var(--log-error)]';
       case 'INFO':
       default:
-        return 'text-sky-400 bg-sky-500/10 border border-sky-500/15';
+        return 'border-[var(--state-running-border)] bg-[var(--state-running-bg)] text-[var(--log-info)]';
     }
   };
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black/35 rounded-xl border border-white/[0.04] select-none">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent-primary)] border-t-transparent mb-2"></div>
-        <span className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wider">Syncing logs...</span>
+      <div className="flex flex-1 flex-col items-center justify-center rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-base)] p-8 select-none">
+        <div className="mb-2 h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent-primary)] border-t-transparent" />
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Syncing logs...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex-1 p-4 bg-[var(--danger-bg)] text-[var(--danger-text)] rounded-xl border border-[var(--danger-border)]/50 text-xs font-sans select-none shadow-sm">
+      <div className="flex-1 rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 font-sans text-xs text-[var(--danger-text)] select-none">
         Failed to fetch logs: {error}
       </div>
     );
@@ -118,8 +114,8 @@ export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => 
 
   if (logs.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black/35 rounded-xl border border-white/[0.04] text-center select-none">
-        <span className="text-xs text-[var(--text-muted)] font-sans">
+      <div className="flex flex-1 flex-col items-center justify-center rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-base)] p-8 text-center select-none">
+        <span className="font-sans text-xs text-[var(--text-muted)]">
           No logs recorded for this execution step.
         </span>
       </div>
@@ -129,10 +125,10 @@ export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => 
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-y-auto bg-black/65 border border-white/[0.04] rounded-xl p-3.5 font-mono text-[11px] leading-relaxed max-h-[300px] shadow-inner select-text"
+      className="max-h-[300px] flex-1 overflow-y-auto rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-base)] p-3.5 font-mono text-[11px] leading-relaxed text-[var(--text-mono)] select-text"
     >
       <div
-        className="w-full relative"
+        className="relative w-full"
         style={{
           height: `${rowVirtualizer.getTotalSize()}px`,
         }}
@@ -143,19 +139,21 @@ export const LogViewer: React.FC<LogViewerProps> = ({ stepRunId, isActive }) => 
           return (
             <div
               key={log.id}
-              className="absolute top-0 left-0 w-full flex items-center gap-2.5 py-0.5 hover:bg-white/[0.03] px-1.5 rounded transition-all duration-100 whitespace-pre-wrap break-all select-text"
+              className="absolute left-0 top-0 flex w-full items-center gap-2.5 whitespace-pre-wrap break-all rounded-[var(--radius-sm)] px-1.5 py-0.5 transition-colors hover:bg-[var(--bg-surface-hover)] select-text"
               style={{
                 height: `${virtualItem.size}px`,
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              <span className="text-[var(--text-muted)] select-none text-[9px] shrink-0 font-medium">{time}</span>
-              <span className="text-white/[0.06] select-none text-[10px] font-sans">|</span>
-              <span className={`font-mono text-[8px] font-bold shrink-0 uppercase px-1.5 py-0.5 rounded border tracking-wider select-none text-center min-w-[48px] ${getLogLevelStyle(log.level)}`}>
+              <span className="shrink-0 font-mono text-[9px] font-medium text-[var(--text-muted)] select-none">{time}</span>
+              <span className="font-sans text-[10px] text-[var(--border-strong)] select-none">|</span>
+              <span className={`min-w-[48px] shrink-0 rounded-[var(--radius-sm)] border px-1.5 py-0.5 text-center font-mono text-[8px] font-bold uppercase tracking-wider select-none ${getLogLevelStyle(log.level)}`}>
                 {log.level.substring(0, 5)}
               </span>
-              <span className="text-white/[0.06] select-none text-[10px] font-sans">|</span>
-              <span className="text-[var(--text-mono)] flex-1 select-text selection:bg-[var(--accent-primary-subtle)] selection:text-white">{log.message}</span>
+              <span className="font-sans text-[10px] text-[var(--border-strong)] select-none">|</span>
+              <span className="flex-1 text-[var(--text-mono)] selection:bg-[var(--accent-primary-subtle)] selection:text-[var(--text-primary)]">
+                {log.message}
+              </span>
             </div>
           );
         })}

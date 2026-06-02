@@ -23,13 +23,10 @@ export default function AppShell() {
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--bg-base)] text-[var(--text-primary)]">
-      {/* TopNav (48px) */}
       <TopNav />
-      
-      {/* Sidebar + Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden bg-[var(--bg-base)]">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-[var(--bg-base)] p-6">
+        <main className="min-w-0 flex-1 overflow-y-auto bg-[var(--bg-base)] p-6">
           <Outlet />
         </main>
       </div>

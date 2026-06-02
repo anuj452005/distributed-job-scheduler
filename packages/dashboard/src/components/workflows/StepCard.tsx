@@ -91,12 +91,15 @@ export default function StepCard({
   };
 
   return (
-    <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] hover:border-[var(--border-strong)] rounded-[var(--radius-lg)] p-5 flex flex-col gap-4 relative transition-all duration-200 shadow-lg group">
+    <div className="relative flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-5">
       
+      {/* Left visual state accent strip */}
+      <div className="absolute bottom-0 left-0 top-0 w-1 rounded-l-[var(--radius-lg)] bg-[var(--accent-primary)]" />
+
       {/* Top Header Row */}
-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2.5 select-none">
-        <div className="flex items-center gap-2">
-          <span className="h-5 w-5 rounded-full bg-[var(--accent-primary-subtle)] border border-[var(--accent-primary-border)] flex items-center justify-center font-mono text-[10px] font-bold text-[var(--accent-primary)]">
+      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2.5 select-none relative z-10 pl-1.5">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-md)] border border-[var(--accent-primary-border)] bg-[var(--accent-primary-subtle)] font-mono text-[10px] font-bold text-[var(--accent-primary)]">
             {index + 1}
           </span>
           <span className="font-sans text-xs font-bold text-[var(--text-primary)]">
@@ -106,14 +109,14 @@ export default function StepCard({
         <button
           type="button"
           onClick={onRemove}
-          className="text-[var(--text-muted)] hover:text-[var(--danger-text)] border border-transparent hover:border-[var(--danger-border)] hover:bg-[var(--danger-bg)] p-1 rounded-md transition-all duration-150"
+          className="cursor-pointer text-[var(--text-muted)] hover:text-[var(--danger-text)] border border-transparent hover:border-[var(--danger-border)] hover:bg-[var(--danger-bg)] p-1.5 rounded-md transition-all duration-150"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
 
       {/* Main Form Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10 pl-1.5">
         {/* Step Key Input */}
         <div className="flex flex-col gap-1.5">
           <label className="font-sans text-[11px] text-[var(--text-secondary)] font-medium">
@@ -124,7 +127,7 @@ export default function StepCard({
             value={step.stepKey}
             onChange={(e) => onChange('stepKey', e.target.value)}
             placeholder="e.g., fetch_user_data"
-            className={`p-2 font-mono text-xs text-[var(--text-mono)] bg-[var(--bg-base)] border rounded-[var(--radius-md)] outline-none focus:border-[var(--accent-primary)] transition-all ${
+            className={`rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-2.5 font-mono text-xs text-[var(--text-mono)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] ${
               errors.stepKey ? 'border-[var(--danger-border)]' : 'border-[var(--border-default)]'
             }`}
           />
@@ -144,7 +147,7 @@ export default function StepCard({
           <select
             value={step.handlerName}
             onChange={(e) => handleHandlerChange(e.target.value)}
-            className="p-2 font-sans text-xs bg-[var(--bg-base)] border border-[var(--border-default)] focus:border-[var(--accent-primary)] rounded-[var(--radius-md)] outline-none text-[var(--text-primary)]"
+            className="cursor-pointer rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-base)] p-2.5 font-sans text-xs text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)]"
           >
             {handlers.map((h) => (
               <option key={h} value={h}>
@@ -162,7 +165,7 @@ export default function StepCard({
       </div>
 
       {/* Execution Policies */}
-      <div className="grid grid-cols-3 gap-3 border-t border-[var(--border-subtle)] pt-3.5">
+      <div className="grid grid-cols-3 gap-3 border-t border-[var(--border-subtle)] pt-3.5 relative z-10 pl-1.5">
         {/* Max Attempts */}
         <div className="flex flex-col gap-1">
           <label className="font-sans text-[10px] text-[var(--text-secondary)] font-medium">Max Attempts</label>
@@ -177,7 +180,7 @@ export default function StepCard({
                 maxAttempts: parseInt(e.target.value) || 1,
               })
             }
-            className="p-2 font-mono text-xs text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-[var(--radius-md)] outline-none text-center"
+            className="rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-base)] p-2 text-center font-mono text-xs text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)]"
           />
         </div>
 
@@ -195,7 +198,7 @@ export default function StepCard({
                 baseDelayMs: parseInt(e.target.value) || 1000,
               })
             }
-            className="p-2 font-mono text-xs text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-[var(--radius-md)] outline-none text-center"
+            className="rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-base)] p-2 text-center font-mono text-xs text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)]"
           />
         </div>
 
@@ -208,13 +211,13 @@ export default function StepCard({
             step={1}
             value={step.timeoutSeconds}
             onChange={(e) => onChange('timeoutSeconds', parseInt(e.target.value) || 300)}
-            className="p-2 font-mono text-xs text-[var(--text-primary)] bg-[var(--bg-base)] border border-[var(--border-default)] rounded-[var(--radius-md)] outline-none text-center"
+            className="rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-base)] p-2 text-center font-mono text-xs text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)]"
           />
         </div>
       </div>
 
       {/* Predecessors / Depends On */}
-      <div className="flex flex-col gap-1.5 border-t border-[var(--border-subtle)] pt-3.5">
+      <div className="flex flex-col gap-1.5 border-t border-[var(--border-subtle)] pt-3.5 relative z-10 pl-1.5">
         <label className="font-sans text-[11px] text-[var(--text-secondary)] font-medium flex items-center gap-1.5">
           Depends On (Predecessor Step Keys)
           <span title="Select other step keys that must complete successfully before this step will be promoted.">
@@ -238,7 +241,7 @@ export default function StepCard({
       </div>
 
       {/* Input Config JSON Editor */}
-      <div className="flex flex-col gap-1.5 border-t border-[var(--border-subtle)] pt-3.5">
+      <div className="flex flex-col gap-1.5 border-t border-[var(--border-subtle)] pt-3.5 relative z-10 pl-1.5">
         <div className="flex items-center justify-between">
           <label className="font-sans text-[11px] text-[var(--text-secondary)] font-medium">
             Input Configuration (JSON Payload)
@@ -249,7 +252,7 @@ export default function StepCard({
               Malformed JSON
             </span>
           ) : (
-            <span className="font-sans text-[10px] text-[var(--state-succeeded-text)] font-semibold uppercase tracking-wider text-[9px] bg-[var(--state-succeeded-bg)] border border-[var(--state-succeeded-border)] px-1 py-0.5 rounded">
+            <span className="font-sans text-[10px] text-[var(--state-succeeded-text)] font-semibold uppercase tracking-wider text-[9px] bg-[var(--state-succeeded-bg)] border border-[var(--state-succeeded-border)] px-1.5 py-0.5 rounded">
               Valid Payload
             </span>
           )}
@@ -258,8 +261,8 @@ export default function StepCard({
           value={jsonText}
           onChange={(e) => handleJsonChange(e.target.value)}
           onBlur={handleJsonBlur}
-          className={`w-full h-28 p-2.5 font-mono text-xs text-[var(--text-mono)] bg-[var(--bg-base)] border rounded-[var(--radius-md)] outline-none resize-y transition-all ${
-            jsonError ? 'border-[var(--danger-border)] focus:border-[var(--danger-border)]' : 'border-[var(--border-default)] focus:border-[var(--accent-primary)]'
+          className={`h-28 w-full resize-y rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-3 font-mono text-xs text-[var(--text-mono)] outline-none transition-colors ${
+            jsonError ? 'border-[var(--danger-border)] focus:border-[var(--danger-border)]' : 'border-[var(--border-default)] hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)]'
           }`}
         />
         {/* Handler-specific hint */}

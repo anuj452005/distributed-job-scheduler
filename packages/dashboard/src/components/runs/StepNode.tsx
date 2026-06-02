@@ -106,18 +106,14 @@ export const StepNode = memo(({ data, selected }: NodeProps<Node<StepNodeData>>)
 
   return (
     <div
-      className={`min-w-[210px] min-h-[64px] rounded-[var(--radius-lg)] border p-3 pl-4.5 pr-3.5 flex flex-col justify-between select-none relative transition-all duration-300 hover:scale-[1.025] hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.5)] shadow-md ${
+      className={`relative flex min-h-[64px] min-w-[210px] flex-col justify-between rounded-[var(--radius-lg)] border p-3 pl-4.5 pr-3.5 select-none transition-colors ${
         isRunning ? 'running-node-pulse' : ''
       }`}
       style={{
         backgroundColor: colors.bg,
         borderColor: selected ? 'var(--accent-primary)' : colors.border,
         color: colors.text,
-        boxShadow: selected
-          ? '0 0 0 2px var(--accent-primary), 0 8px 24px rgba(79, 126, 255, 0.25)'
-          : isRunning
-          ? undefined
-          : '0 4px 12px rgba(0, 0, 0, 0.25)',
+        boxShadow: selected ? '0 0 0 2px var(--accent-primary)' : undefined,
       }}
     >
       {/* Left state accent indicator strip */}
@@ -129,10 +125,9 @@ export const StepNode = memo(({ data, selected }: NodeProps<Node<StepNodeData>>)
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-2.5 !h-2.5 !border-2 !border-[var(--bg-base)] !shadow-md transition-transform duration-200 hover:scale-125"
+        className="!h-2.5 !w-2.5 !border-2 !border-[var(--bg-base)]"
         style={{
           backgroundColor: colors.text,
-          boxShadow: `0 0 8px ${colors.text}`,
         }}
       />
 
@@ -140,16 +135,16 @@ export const StepNode = memo(({ data, selected }: NodeProps<Node<StepNodeData>>)
         <span className="font-mono text-xs font-bold truncate max-w-[145px] text-[var(--text-primary)]" title={data.stepKey}>
           {data.stepKey}
         </span>
-        <span className="shrink-0 flex items-center justify-center p-1 rounded bg-black/20 text-current">
+        <span className="flex shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--bg-surface-raised)] p-1 text-current">
           {getIcon(status)}
         </span>
       </div>
 
-      <div className="flex items-center justify-between gap-2.5 mt-1.5 pt-1.5 border-t border-white/[0.04]">
+      <div className="mt-1.5 flex items-center justify-between gap-2.5 border-t border-[var(--border-subtle)] pt-1.5">
         <span className="font-sans text-[10px] text-[var(--text-secondary)] font-medium truncate max-w-[120px]" title={data.handlerName}>
           {data.handlerName}
         </span>
-        <span className="font-mono text-[9px] text-[var(--text-muted)] font-semibold shrink-0 bg-black/25 px-1.5 py-0.5 rounded border border-white/[0.03]">
+        <span className="shrink-0 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-surface-raised)] px-1.5 py-0.5 font-mono text-[9px] font-semibold text-[var(--text-muted)]">
           Try: {data.attemptCount}/{data.maxAttempts}
         </span>
       </div>
@@ -157,10 +152,9 @@ export const StepNode = memo(({ data, selected }: NodeProps<Node<StepNodeData>>)
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-2.5 !h-2.5 !border-2 !border-[var(--bg-base)] !shadow-md transition-transform duration-200 hover:scale-125"
+        className="!h-2.5 !w-2.5 !border-2 !border-[var(--bg-base)]"
         style={{
           backgroundColor: colors.text,
-          boxShadow: `0 0 8px ${colors.text}`,
         }}
       />
     </div>

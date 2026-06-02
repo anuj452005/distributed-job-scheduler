@@ -159,7 +159,7 @@ export default function WorkflowForm({
       
       {/* Top level Error Alert */}
       {topLevelError && (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 text-[var(--danger-text)] text-xs flex gap-2 items-start font-sans shadow-xl">
+        <div className="flex items-start gap-2 rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 font-sans text-xs text-[var(--danger-text)]">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <div className="flex flex-col gap-1">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Error</span>
@@ -169,7 +169,7 @@ export default function WorkflowForm({
       )}
 
       {/* 1. Context Details Panel */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 flex flex-col gap-4 shadow-lg select-none">
+      <div className="relative flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 select-none">
         <h4 className="font-sans text-[var(--text-xs)] text-[var(--text-primary)] font-bold uppercase tracking-wider border-b border-[var(--border-subtle)] pb-2 flex items-center gap-1.5">
           <Activity className="h-4 w-4 text-[var(--accent-primary)] animate-pulse" />
           1. Pipeline Context
@@ -184,12 +184,12 @@ export default function WorkflowForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Process Customer Invoice Transactions"
-            className={`p-2 font-sans text-xs bg-[var(--bg-base)] border rounded-[var(--radius-md)] outline-none focus:border-[var(--accent-primary)] transition-all ${
+            className={`rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-2.5 font-sans text-xs text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] ${
               fieldErrors.name ? 'border-[var(--danger-border)]' : 'border-[var(--border-default)]'
             }`}
           />
           {fieldErrors.name && (
-            <span className="font-sans text-[10px] text-[var(--danger-text)] flex items-center gap-1 mt-0.5">
+            <span className="font-sans text-[10px] text-[var(--danger-text)] flex items-center gap-1 mt-0.5 animate-pulse">
               <AlertCircle className="h-3 w-3 shrink-0" />
               {fieldErrors.name}
             </span>
@@ -204,13 +204,13 @@ export default function WorkflowForm({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Specify trigger events, expected input payloads, and operation guidelines..."
-            className="p-2.5 font-sans text-xs bg-[var(--bg-base)] border border-[var(--border-default)] focus:border-[var(--accent-primary)] rounded-[var(--radius-md)] outline-none h-20 resize-none"
+            className="h-20 resize-none rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-base)] p-3 font-sans text-xs text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)]"
           />
         </div>
       </div>
 
       {/* 2. Step DAG Configuration */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 shadow-lg">
+      <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 select-none">
         <StepBuilder
           steps={steps}
           onChange={handleStepsChange}
@@ -233,7 +233,7 @@ export default function WorkflowForm({
         <Button
           type="submit"
           disabled={submitting}
-          className="bg-[var(--accent-primary)] text-[var(--text-inverse)] hover:bg-[var(--accent-primary-hover)] text-xs font-semibold px-6 shadow-md flex items-center gap-1.5 active:scale-95 min-w-[160px] justify-center"
+          className="flex min-w-[160px] items-center justify-center gap-1.5 bg-[var(--accent-primary)] px-6 text-xs font-semibold text-[var(--text-inverse)] hover:bg-[var(--accent-primary-hover)]"
         >
           {submitting ? (
             <span className="h-3.5 w-3.5 rounded-full border-2 border-[var(--text-inverse)] border-t-transparent animate-spin shrink-0" />

@@ -1,17 +1,31 @@
 import React from 'react';
+import { 
+  Clock, 
+  ListOrdered, 
+  Play, 
+  CheckCircle2, 
+  AlertCircle, 
+  RefreshCw, 
+  ShieldAlert, 
+  XCircle,
+  AlertTriangle
+} from 'lucide-react';
 
 interface StepStatusBadgeProps {
   status: string;
 }
 
 export const StepStatusBadge: React.FC<StepStatusBadgeProps> = ({ status }) => {
+  const statusUpper = status.toUpperCase();
+
   const getStyle = (s: string) => {
-    switch (s.toUpperCase()) {
+    switch (s) {
       case 'PENDING':
         return 'bg-[var(--state-pending-bg)] text-[var(--state-pending-text)] border-[var(--state-pending-border)]';
       case 'QUEUED':
         return 'bg-[var(--state-queued-bg)] text-[var(--state-queued-text)] border-[var(--state-queued-border)]';
       case 'RUNNING':
+      case 'CLAIMED':
         return 'bg-[var(--state-running-bg)] text-[var(--state-running-text)] border-[var(--state-running-border)]';
       case 'SUCCEEDED':
       case 'COMPLETED':
@@ -32,14 +46,43 @@ export const StepStatusBadge: React.FC<StepStatusBadgeProps> = ({ status }) => {
     }
   };
 
+  const getIcon = (s: string) => {
+    const iconClass = "h-3 w-3 shrink-0";
+    switch (s) {
+      case 'PENDING':
+        return <Clock className={iconClass} />;
+      case 'QUEUED':
+        return <ListOrdered className={iconClass} />;
+      case 'RUNNING':
+      case 'CLAIMED':
+        return <Play className={`${iconClass} text-[var(--state-running-text)] fill-[var(--state-running-text)] animate-pulse`} />;
+      case 'SUCCEEDED':
+      case 'COMPLETED':
+        return <CheckCircle2 className={`${iconClass} text-[var(--state-succeeded-text)]`} />;
+      case 'FAILED':
+        return <AlertCircle className={`${iconClass} text-[var(--state-failed-text)]`} />;
+      case 'RETRYING':
+        return <RefreshCw className={`${iconClass} text-[var(--state-retrying-text)] animate-spin`} />;
+      case 'DEAD_LETTERED':
+      case 'DLQ':
+        return <ShieldAlert className={`${iconClass} text-[var(--state-dlq-text)]`} />;
+      case 'CANCELLED':
+        return <XCircle className={iconClass} />;
+      case 'CANCEL_REQUESTED':
+        return <AlertTriangle className={`${iconClass} animate-pulse text-[var(--state-cancel-req-text)]`} />;
+      default:
+        return <Clock className={iconClass} />;
+    }
+  };
+
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-wider ${getStyle(
-        status
+      className={`inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider ${getStyle(
+        statusUpper
       )}`}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-current shrink-0"></span>
-      {status}
+      {getIcon(statusUpper)}
+      {statusUpper === 'DEAD_LETTERED' ? 'DLQ' : statusUpper === 'CLAIMED' ? 'RUNNING' : statusUpper}
     </span>
   );
 };

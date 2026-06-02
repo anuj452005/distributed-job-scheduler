@@ -81,7 +81,7 @@ export default function WorkflowsPage() {
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg bg-[var(--state-succeeded-bg)] border border-[var(--state-succeeded-border)] p-3 text-[var(--state-succeeded-text)] shadow-2xl animate-[slideIn_0.2s_ease-out]">
+        <div className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--state-succeeded-border)] bg-[var(--state-succeeded-bg)] p-3 text-[var(--state-succeeded-text)] animate-[slideIn_0.2s_ease-out]">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span className="font-sans text-xs font-semibold">{toastMessage}</span>
         </div>
@@ -90,8 +90,8 @@ export default function WorkflowsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
         <div>
-          <h1 className="font-sans text-[var(--text-xl)] font-bold text-[var(--text-primary)] tracking-wide flex items-center gap-2">
-            <GitBranch className="h-5 w-5 text-[var(--accent-primary)]" strokeWidth={2} />
+          <h1 className="flex items-center gap-2 font-sans text-[var(--text-xl)] font-semibold text-[var(--text-primary)]">
+            <GitBranch className="h-5 w-5 text-[var(--accent-primary)]" strokeWidth={1.5} />
             Workflows
           </h1>
           <p className="font-sans text-[var(--text-xs)] text-[var(--text-secondary)] mt-1">
@@ -100,7 +100,7 @@ export default function WorkflowsPage() {
         </div>
         <Button
           asChild
-          className="bg-[var(--accent-primary)] text-[var(--text-inverse)] hover:bg-[var(--accent-primary-hover)] flex items-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-[var(--radius-md)] transition-all shadow-[0_0_15px_rgba(79,126,255,0.25)] active:scale-95"
+          className="flex items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--accent-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-inverse)] hover:bg-[var(--accent-primary-hover)]"
         >
           <Link to="/workflows/new">
             <Plus className="h-4 w-4" strokeWidth={2.5} />
@@ -111,7 +111,7 @@ export default function WorkflowsPage() {
 
       {/* Error Alert Box */}
       {error && !loading && (
-        <div className="rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 text-[var(--danger-text)] text-xs flex gap-2 items-start max-w-2xl shadow-xl">
+        <div className="flex max-w-2xl items-start gap-2 rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 text-xs text-[var(--danger-text)]">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <div className="flex flex-col gap-1">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Connection Failure</span>

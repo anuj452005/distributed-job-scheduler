@@ -11,7 +11,7 @@ export default function WorkflowCreatePage() {
   const [previewSteps, setPreviewSteps] = useState<StepInput[]>(() => createDeterministicDemoSteps());
 
   return (
-    <div className="flex flex-col gap-4 animate-[fadeIn_0.2s_ease-out] select-none w-full h-full">
+    <div className="flex flex-col gap-4 animate-[fadeIn_0.2s_ease-out] select-none w-full pb-6">
       {/* Page Header */}
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4 shrink-0">
         <div>
@@ -26,14 +26,14 @@ export default function WorkflowCreatePage() {
       </div>
 
       {/* Split Pane: Form (left) + Live DAG Preview (right) */}
-      <div className="flex flex-col xl:flex-row gap-6 flex-1 min-h-0">
-        {/* LEFT — Workflow Form (scrollable) */}
-        <div className="flex-1 min-w-0 overflow-y-auto xl:max-w-[600px]">
+      <div className="flex flex-col xl:flex-row gap-6 items-start">
+        {/* LEFT — Workflow Form (flows naturally) */}
+        <div className="flex-1 min-w-0 xl:max-w-[660px] w-full">
           <WorkflowForm onStepsChange={setPreviewSteps} initialSteps={previewSteps} />
         </div>
 
-        {/* RIGHT — Live DAG Preview */}
-        <div className="xl:w-[420px] shrink-0 flex flex-col gap-2">
+        {/* RIGHT — Sticky Live DAG Preview */}
+        <div className="w-full xl:w-[480px] shrink-0 flex flex-col gap-2 xl:sticky xl:top-4">
           <div className="flex items-center gap-1.5 shrink-0">
             <Eye className="h-3.5 w-3.5 text-[var(--accent-primary)]" />
             <span className="font-sans text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">
@@ -43,7 +43,7 @@ export default function WorkflowCreatePage() {
               {previewSteps.length} node{previewSteps.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="bg-[var(--bg-base)] border border-[var(--border-default)] rounded-[var(--radius-lg)] h-[320px] xl:h-full overflow-hidden shadow-inner">
+          <div className="h-[320px] w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-base)] xl:h-[500px]">
             <ReactFlowProvider>
               <WorkflowDesignCanvas steps={previewSteps} />
             </ReactFlowProvider>

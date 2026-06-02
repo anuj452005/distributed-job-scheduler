@@ -10,14 +10,14 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-60 h-full border-r border-[var(--border-default)] bg-[var(--bg-surface)] flex flex-col justify-between py-4 select-none">
-      <div className="flex flex-col gap-1 px-2">
+    <aside className="flex h-full w-[240px] shrink-0 select-none flex-col justify-between border-r border-[var(--border-default)] bg-[var(--bg-surface)] py-4">
+      <div className="flex flex-col gap-1 px-3">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] font-sans text-[var(--text-sm)] font-medium transition-colors ${
+              `flex items-center gap-3 rounded-[var(--radius-md)] border px-3 py-2 font-sans text-[var(--text-sm)] font-medium transition-colors ${
                 isActive
                   ? 'bg-[var(--accent-primary-subtle)] text-[var(--accent-primary)] border border-[var(--accent-primary-border)]'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] border border-transparent'
@@ -29,7 +29,7 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </div>
-      <div className="px-4 py-2 border-t border-[var(--border-subtle)]">
+      <div className="border-t border-[var(--border-subtle)] px-4 py-2">
         <div className="text-[10px] text-[var(--text-muted)] font-mono tracking-wider uppercase">
           FlowForge v0.1.0
         </div>

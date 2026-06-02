@@ -12,7 +12,7 @@ export default function SignInPage() {
       <div className="z-10 flex flex-col items-center gap-6 w-full max-w-md">
         {/* Branding header */}
         <div className="flex flex-col items-center gap-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--bg-surface-raised)] border border-[var(--border-strong)] shadow-lg animate-pulse">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--bg-surface-raised)]">
             <Activity className="h-6 w-6 text-[var(--accent-primary)]" strokeWidth={1.5} />
           </div>
           <h1 className="font-sans text-[var(--text-primary)] text-xl font-bold tracking-wider mt-2">
@@ -24,19 +24,19 @@ export default function SignInPage() {
         </div>
 
         {/* Clerk Sign In component */}
-        <div className="w-full border border-[var(--border-default)] rounded-xl bg-[var(--bg-surface)] overflow-hidden shadow-2xl p-1">
+        <div className="w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-1">
           <SignIn
             routing="hash"
             appearance={{
               variables: {
-                colorPrimary: '#4f7eff',
-                colorBackground: '#111318',
-                colorInputBackground: '#0a0c10',
-                colorInputText: '#e8ecf4',
-                colorText: '#e8ecf4',
-                colorTextSecondary: '#8b95b0',
-                colorBorder: '#1f2535',
-                colorTextOnPrimaryBackground: '#0a0c10',
+                colorPrimary: 'var(--accent-primary)',
+                colorBackground: 'var(--bg-surface)',
+                colorInputBackground: 'var(--bg-base)',
+                colorInputText: 'var(--text-primary)',
+                colorText: 'var(--text-primary)',
+                colorTextSecondary: 'var(--text-secondary)',
+                colorBorder: 'var(--border-default)',
+                colorTextOnPrimaryBackground: 'var(--text-inverse)',
               },
               elements: {
                 card: "bg-transparent shadow-none border-none",
