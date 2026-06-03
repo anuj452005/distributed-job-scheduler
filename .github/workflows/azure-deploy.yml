@@ -16,6 +16,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Sanitize and Export Azure Secrets
+        env:
+          AZURE_ACR_NAME: ${{ secrets.AZURE_ACR_NAME }}
+          AZURE_RG_NAME: ${{ secrets.AZURE_RG_NAME }}
+          AZURE_API_APP_NAME: ${{ secrets.AZURE_API_APP_NAME }}
+          AZURE_WORKER_APP_NAME: ${{ secrets.AZURE_WORKER_APP_NAME }}
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
+        run: |
+          echo "AZ_ACR_NAME=$(echo "$AZURE_ACR_NAME" | tr -d '\r\n')" >> $GITHUB_ENV
+          echo "AZ_RG_NAME=$(echo "$AZURE_RG_NAME" | tr -d '\r\n')" >> $GITHUB_ENV
+          echo "AZ_API_APP_NAME=$(echo "$AZURE_API_APP_NAME" | tr -d '\r\n')" >> $GITHUB_ENV
+          echo "AZ_WORKER_APP_NAME=$(echo "$AZURE_WORKER_APP_NAME" | tr -d '\r\n')" >> $GITHUB_ENV
+          echo "VITE_CLERK_PUBLISHABLE_KEY=$(echo "$VITE_CLERK_PUBLISHABLE_KEY" | tr -d '\r\n')" >> $GITHUB_ENV
+
       - name: Log in to Azure
         uses: azure/login@v2
         with:
@@ -23,32 +37,32 @@ jobs:
 
       - name: Log in to Azure Container Registry
         run: |
-          az acr login --name ${{ secrets.AZURE_ACR_NAME }}
+          az acr login --name "$AZ_ACR_NAME"
 
       - name: Build and Push API Image
         run: |
-          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.AZURE_ACR_NAME }} --query "loginServer" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name "$AZ_ACR_NAME" --query "loginServer" -o tsv | tr -d '\r\n')
           docker build -t "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}" -t "$ACR_LOGIN_SERVER/flowforge-api:latest" -f packages/api/Dockerfile .
           docker push "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
           docker push "$ACR_LOGIN_SERVER/flowforge-api:latest"
 
       - name: Build and Push Worker Image
         run: |
-          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.AZURE_ACR_NAME }} --query "loginServer" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name "$AZ_ACR_NAME" --query "loginServer" -o tsv | tr -d '\r\n')
           docker build -t "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}" -t "$ACR_LOGIN_SERVER/flowforge-worker:latest" -f packages/worker/Dockerfile .
           docker push "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
           docker push "$ACR_LOGIN_SERVER/flowforge-worker:latest"
 
       - name: Update Azure Container Apps
         run: |
-          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.AZURE_ACR_NAME }} --query "loginServer" -o tsv)
-          az containerapp update --name ${{ secrets.AZURE_API_APP_NAME }} --resource-group ${{ secrets.AZURE_RG_NAME }} --image "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
-          az containerapp update --name ${{ secrets.AZURE_WORKER_APP_NAME }} --resource-group ${{ secrets.AZURE_RG_NAME }} --image "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
+          ACR_LOGIN_SERVER=$(az acr show --name "$AZ_ACR_NAME" --query "loginServer" -o tsv | tr -d '\r\n')
+          az containerapp update --name "$AZ_API_APP_NAME" --resource-group "$AZ_RG_NAME" --image "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
+          az containerapp update --name "$AZ_WORKER_APP_NAME" --resource-group "$AZ_RG_NAME" --image "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
 
       - name: Fetch API URL
         id: fetch-api-url
         run: |
-          API_URL=$(az containerapp show --name ${{ secrets.AZURE_API_APP_NAME }} --resource-group ${{ secrets.AZURE_RG_NAME }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          API_URL=$(az containerapp show --name "$AZ_API_APP_NAME" --resource-group "$AZ_RG_NAME" --query "properties.configuration.ingress.fqdn" -o tsv | tr -d '\r\n')
           echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
 
       - name: Set up Node.js
@@ -61,7 +75,6 @@ jobs:
       - name: Install Dependencies & Build Frontend
         env:
           VITE_API_URL: ${{ steps.fetch-api-url.outputs.api_url }}
-          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
         run: |
           npm ci
           npm run build --workspace=packages/dashboard
