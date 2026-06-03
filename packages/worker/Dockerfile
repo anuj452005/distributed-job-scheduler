@@ -22,8 +22,12 @@ COPY packages/queue packages/queue
 COPY packages/handlers packages/handlers
 COPY packages/worker packages/worker
 
-# Build the packages
-RUN npm run build --workspaces --if-present
+# Build the packages in topological order
+RUN npm run build --workspace=packages/shared
+RUN npm run build --workspace=packages/db
+RUN npm run build --workspace=packages/queue
+RUN npm run build --workspace=packages/handlers
+RUN npm run build --workspace=packages/worker
 
 FROM node:20-alpine AS runner
 WORKDIR /app
