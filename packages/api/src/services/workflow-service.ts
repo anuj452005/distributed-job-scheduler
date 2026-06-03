@@ -106,7 +106,7 @@ export async function createWorkflow(
  */
 export async function listWorkflows(
   pool: pg.Pool,
-  opts: ListWorkflowsOptions
+  opts: ListWorkflowsOptions & { userId: string }
 ): Promise<{ items: WorkflowDto[]; total: number }> {
   const page = opts.page && opts.page > 0 ? opts.page : 1;
   const limit = opts.limit && opts.limit > 0 ? opts.limit : 20;
@@ -117,8 +117,8 @@ export async function listWorkflows(
   const countRes = await pool.query(
     `SELECT COUNT(*)::int as total
      FROM workflows
-     WHERE ($1::text IS NULL OR name ILIKE $1)`,
-    [searchPattern]
+     WHERE ($1::text IS NULL OR name ILIKE $1) AND created_by = $2`,
+    [searchPattern, opts.userId]
   );
   const total = countRes.rows[0]?.total ?? 0;
 
@@ -132,11 +132,11 @@ export async function listWorkflows(
             COALESCE(COUNT(s.id), 0)::int as "stepCount"
      FROM workflows w
      LEFT JOIN workflow_steps s ON w.id = s.workflow_id
-     WHERE ($1::text IS NULL OR w.name ILIKE $1)
+     WHERE ($1::text IS NULL OR w.name ILIKE $1) AND w.created_by = $2
      GROUP BY w.id
      ORDER BY w.created_at DESC
-     LIMIT $2 OFFSET $3`,
-    [searchPattern, limit, offset]
+     LIMIT $3 OFFSET $4`,
+    [searchPattern, opts.userId, limit, offset]
   );
 
   const items: WorkflowDto[] = itemsRes.rows.map(row => ({
@@ -157,7 +157,8 @@ export async function listWorkflows(
  */
 export async function getWorkflow(
   pool: pg.Pool,
-  id: string
+  id: string,
+  userId: string
 ): Promise<WorkflowDetailDto | null> {
   // 1. Fetch workflow metadata and step count
   const workflowRes = await pool.query(
@@ -165,9 +166,9 @@ export async function getWorkflow(
             COALESCE(COUNT(s.id), 0)::int as "stepCount"
      FROM workflows w
      LEFT JOIN workflow_steps s ON w.id = s.workflow_id
-     WHERE w.id = $1
+     WHERE w.id = $1 AND w.created_by = $2
      GROUP BY w.id`,
-    [id]
+    [id, userId]
   );
 
   if (workflowRes.rows.length === 0) {
@@ -242,10 +243,10 @@ export async function updateWorkflow(
 
     // 1. Lock workflow row and check existence
     const existRes = await client.query(
-      `SELECT id FROM workflows WHERE id = $1 FOR UPDATE`,
+      `SELECT id, created_by FROM workflows WHERE id = $1 FOR UPDATE`,
       [id]
     );
-    if (existRes.rows.length === 0) {
+    if (existRes.rows.length === 0 || existRes.rows[0].created_by !== userId) {
       await client.query('ROLLBACK');
       return null;
     }
@@ -333,7 +334,8 @@ export async function updateWorkflow(
  */
 export async function deleteWorkflow(
   pool: pg.Pool,
-  id: string
+  id: string,
+  userId: string
 ): Promise<boolean> {
   const client = await pool.connect();
   try {
@@ -341,10 +343,10 @@ export async function deleteWorkflow(
 
     // 1. Lock workflow and check existence
     const existRes = await client.query(
-      `SELECT id FROM workflows WHERE id = $1 FOR UPDATE`,
+      `SELECT id, created_by FROM workflows WHERE id = $1 FOR UPDATE`,
       [id]
     );
-    if (existRes.rows.length === 0) {
+    if (existRes.rows.length === 0 || existRes.rows[0].created_by !== userId) {
       await client.query('ROLLBACK');
       return false;
     }

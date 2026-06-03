@@ -20,7 +20,7 @@ export const deleteWorkflowRoute: RouteHandler = async (request, reply) => {
 
   try {
     // 2. Delete workflow
-    const deleted = await deleteWorkflow(pool, id);
+    const deleted = await deleteWorkflow(pool, id, userId);
     if (!deleted) {
       return reply.status(404).send({
         error: {

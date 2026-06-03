@@ -16,8 +16,15 @@ export const getRunRoute: RouteHandler = async (request, reply) => {
     });
   }
 
+  const userId = request.userId;
+  if (!userId) {
+    return reply.code(401).send({
+      error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+    });
+  }
+
   // 2. Fetch run detail
-  const runDetail = await getRunDetail(pool, paramsResult.data.id);
+  const runDetail = await getRunDetail(pool, paramsResult.data.id, userId);
   if (!runDetail) {
     return reply.code(404).send({
       error: { code: 'RUN_NOT_FOUND', message: 'Run not found' },

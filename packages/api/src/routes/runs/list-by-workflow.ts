@@ -42,12 +42,20 @@ export const listRunsByWorkflowRoute: RouteHandler = async (request, reply) => {
     });
   }
 
+  const userId = request.userId;
+  if (!userId) {
+    return reply.code(401).send({
+      error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+    });
+  }
+
   const { page, limit, status } = queryResult.data;
-  const result = await listRunsByWorkflow(pool, paramsResult.data.id, {
-    page,
-    limit,
-    status,
-  });
+  const result = await listRunsByWorkflow(
+    pool,
+    paramsResult.data.id,
+    { page, limit, status },
+    userId
+  );
 
   return reply.code(200).send({
     data: {

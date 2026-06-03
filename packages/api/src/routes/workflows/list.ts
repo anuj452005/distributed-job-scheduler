@@ -12,7 +12,14 @@ const listQuerySchema = z.object({
 export const listWorkflowsRoute: RouteHandler = async (request, reply) => {
   const { page, limit, search } = listQuerySchema.parse(request.query);
 
-  const result = await listWorkflows(pool, { page, limit, search });
+  const userId = request.userId;
+  if (!userId) {
+    return reply.status(401).send({
+      error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+    });
+  }
+
+  const result = await listWorkflows(pool, { page, limit, search, userId });
 
   return reply.status(200).send({
     data: {

@@ -17,6 +17,7 @@ export type ListRunsOptions = {
   workflowId?: string;
   from?: string;
   to?: string;
+  userId?: string;
 };
 
 export class WorkflowNotFoundError extends Error {
@@ -51,10 +52,10 @@ export async function triggerRun(
   inputPayload: Record<string, unknown>,
   userId: string
 ): Promise<WorkflowRunDto> {
-  // 1. Check workflow exists
+  // 1. Check workflow exists and belongs to user
   const workflowRes = await pool.query(
-    `SELECT id FROM workflows WHERE id = $1`,
-    [workflowId]
+    `SELECT id FROM workflows WHERE id = $1 AND created_by = $2`,
+    [workflowId, userId]
   );
   if (workflowRes.rows.length === 0) {
     throw new WorkflowNotFoundError(workflowId);
@@ -95,7 +96,8 @@ export async function triggerRun(
  */
 export async function getRunDetail(
   pool: pg.Pool,
-  runId: string
+  runId: string,
+  userId: string
 ): Promise<WorkflowRunDetailDto | null> {
   const runRes = await pool.query(
     `SELECT wr.id, wr.workflow_id, w.name AS workflow_name, wr.status,
@@ -103,8 +105,8 @@ export async function getRunDetail(
             wr.started_at, wr.completed_at, wr.created_at
      FROM workflow_runs wr
      JOIN workflows w ON w.id = wr.workflow_id
-     WHERE wr.id = $1`,
-    [runId]
+     WHERE wr.id = $1 AND w.created_by = $2`,
+    [runId, userId]
   );
 
   if (runRes.rows.length === 0) {
@@ -208,6 +210,10 @@ export async function listRuns(
     conditions.push(`wr.created_at <= $${paramIdx++}`);
     params.push(opts.to);
   }
+  if (opts.userId) {
+    conditions.push(`w.created_by = $${paramIdx++}`);
+    params.push(opts.userId);
+  }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
@@ -215,6 +221,7 @@ export async function listRuns(
   const countRes = await pool.query(
     `SELECT COUNT(*)::int AS total
      FROM workflow_runs wr
+     JOIN workflows w ON w.id = wr.workflow_id
      ${whereClause}`,
     params
   );
@@ -260,7 +267,8 @@ export async function listRuns(
 export async function listRunsByWorkflow(
   pool: pg.Pool,
   workflowId: string,
-  opts: Pick<ListRunsOptions, 'page' | 'limit' | 'status'>
+  opts: Pick<ListRunsOptions, 'page' | 'limit' | 'status'>,
+  userId: string
 ): Promise<{ items: RunSummaryDto[]; total: number; page: number; limit: number }> {
-  return listRuns(pool, { ...opts, workflowId });
+  return listRuns(pool, { ...opts, workflowId, userId });
 }

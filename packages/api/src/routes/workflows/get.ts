@@ -10,7 +10,14 @@ const paramsSchema = z.object({
 export const getWorkflowRoute: RouteHandler = async (request, reply) => {
   const { id } = paramsSchema.parse(request.params);
 
-  const workflow = await getWorkflow(pool, id);
+  const userId = request.userId;
+  if (!userId) {
+    return reply.status(401).send({
+      error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+    });
+  }
+
+  const workflow = await getWorkflow(pool, id, userId);
   if (!workflow) {
     return reply.status(404).send({
       error: {

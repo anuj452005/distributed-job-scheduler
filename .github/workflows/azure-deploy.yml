@@ -1,0 +1,82 @@
+name: Deploy FlowForge to Azure
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        run: |
+          az acr login --name ${{ secrets.AZURE_ACR_NAME }}
+
+      - name: Build and Push API Image
+        run: |
+          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.AZURE_ACR_NAME }} --query "loginServer" -o tsv)
+          docker build -t "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}" -t "$ACR_LOGIN_SERVER/flowforge-api:latest" -f packages/api/Dockerfile .
+          docker push "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
+          docker push "$ACR_LOGIN_SERVER/flowforge-api:latest"
+
+      - name: Build and Push Worker Image
+        run: |
+          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.AZURE_ACR_NAME }} --query "loginServer" -o tsv)
+          docker build -t "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}" -t "$ACR_LOGIN_SERVER/flowforge-worker:latest" -f packages/worker/Dockerfile .
+          docker push "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
+          docker push "$ACR_LOGIN_SERVER/flowforge-worker:latest"
+
+      - name: Update Azure Container Apps
+        run: |
+          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.AZURE_ACR_NAME }} --query "loginServer" -o tsv)
+          az containerapp update \
+            --name ${{ secrets.AZURE_API_APP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RG_NAME }} \
+            --image "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
+          az containerapp update \
+            --name ${{ secrets.AZURE_WORKER_APP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RG_NAME }} \
+            --image "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
+
+      - name: Fetch API URL
+        id: fetch-api-url
+        run: |
+          API_URL=$(az containerapp show --name ${{ secrets.AZURE_API_APP_NAME }} --resource-group ${{ secrets.AZURE_RG_NAME }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install Dependencies & Build Frontend
+        env:
+          VITE_API_URL: ${{ steps.fetch-api-url.outputs.api_url }}
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
+        run: |
+          npm ci
+          npm run build --workspace=packages/dashboard
+
+      - name: Deploy Frontend to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "packages/dashboard/dist"
+          skip_app_build: true

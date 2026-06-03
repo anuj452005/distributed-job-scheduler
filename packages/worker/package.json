@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@types/pg": "^8.11.2",
-    "tsx": "^4.7.1"
+    "tsx": "^4.7.1",
+    "typescript": "^6.0.3"
   }
 }
