@@ -74,7 +74,7 @@ jobs:
 
       - name: Install Dependencies & Build Frontend
         env:
-          VITE_API_URL: ${{ steps.fetch-api-url.outputs.api_url }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || steps.fetch-api-url.outputs.api_url }}
         run: |
           npm ci
           npm run build --workspace=packages/dashboard
