@@ -42,14 +42,8 @@ jobs:
       - name: Update Azure Container Apps
         run: |
           ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.AZURE_ACR_NAME }} --query "loginServer" -o tsv)
-          az containerapp update \
-            --name ${{ secrets.AZURE_API_APP_NAME }} \
-            --resource-group ${{ secrets.AZURE_RG_NAME }} \
-            --image "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
-          az containerapp update \
-            --name ${{ secrets.AZURE_WORKER_APP_NAME }} \
-            --resource-group ${{ secrets.AZURE_RG_NAME }} \
-            --image "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
+          az containerapp update --name ${{ secrets.AZURE_API_APP_NAME }} --resource-group ${{ secrets.AZURE_RG_NAME }} --image "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
+          az containerapp update --name ${{ secrets.AZURE_WORKER_APP_NAME }} --resource-group ${{ secrets.AZURE_RG_NAME }} --image "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
 
       - name: Fetch API URL
         id: fetch-api-url
