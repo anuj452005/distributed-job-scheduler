@@ -6,12 +6,42 @@ export async function statsRoutes(app: FastifyInstance): Promise<void> {
   app.get('/stats', { preHandler: [requireAuth] }, async (request, reply) => {
     const statsRes = await pool.query(`
       SELECT
-        (SELECT COUNT(*)::int FROM step_runs WHERE status = 'QUEUED') AS "queueDepth",
-        (SELECT COUNT(DISTINCT worker_id)::int FROM step_runs WHERE status = 'RUNNING' AND worker_id IS NOT NULL) AS "activeWorkers",
-        (SELECT COUNT(*)::int FROM step_runs WHERE status = 'DEAD_LETTERED') AS "dlqDepth",
-        (SELECT COUNT(*)::int FROM step_runs WHERE status = 'SUCCEEDED' AND completed_at >= NOW() - INTERVAL '1 hour') AS "jobsLastHour",
-        (SELECT COUNT(*)::int FROM step_runs WHERE status = 'FAILED' AND completed_at >= NOW() - INTERVAL '1 hour') AS "failedLastHour"
-    `);
+        (
+          SELECT COUNT(*)::int 
+          FROM step_runs sr
+          JOIN workflow_runs wr ON sr.workflow_run_id = wr.id
+          JOIN workflows w ON wr.workflow_id = w.id
+          WHERE sr.status = 'QUEUED' AND w.created_by = $1
+        ) AS "queueDepth",
+        (
+          SELECT COUNT(DISTINCT sr.worker_id)::int 
+          FROM step_runs sr
+          JOIN workflow_runs wr ON sr.workflow_run_id = wr.id
+          JOIN workflows w ON wr.workflow_id = w.id
+          WHERE sr.status = 'RUNNING' AND sr.worker_id IS NOT NULL AND w.created_by = $1
+        ) AS "activeWorkers",
+        (
+          SELECT COUNT(*)::int 
+          FROM step_runs sr
+          JOIN workflow_runs wr ON sr.workflow_run_id = wr.id
+          JOIN workflows w ON wr.workflow_id = w.id
+          WHERE sr.status = 'DEAD_LETTERED' AND w.created_by = $1
+        ) AS "dlqDepth",
+        (
+          SELECT COUNT(*)::int 
+          FROM step_runs sr
+          JOIN workflow_runs wr ON sr.workflow_run_id = wr.id
+          JOIN workflows w ON wr.workflow_id = w.id
+          WHERE sr.status = 'SUCCEEDED' AND sr.completed_at >= NOW() - INTERVAL '1 hour' AND w.created_by = $1
+        ) AS "jobsLastHour",
+        (
+          SELECT COUNT(*)::int 
+          FROM step_runs sr
+          JOIN workflow_runs wr ON sr.workflow_run_id = wr.id
+          JOIN workflows w ON wr.workflow_id = w.id
+          WHERE sr.status = 'FAILED' AND sr.completed_at >= NOW() - INTERVAL '1 hour' AND w.created_by = $1
+        ) AS "failedLastHour"
+    `, [request.userId]);
 
     const { queueDepth, activeWorkers, dlqDepth, jobsLastHour, failedLastHour } = statsRes.rows[0];
     const total = jobsLastHour + failedLastHour;
