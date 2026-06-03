@@ -23,7 +23,7 @@ COPY packages/handlers packages/handlers
 COPY packages/worker packages/worker
 
 # Build the packages
-RUN npm run build --workspace=packages/worker
+RUN npm run build --workspaces --if-present
 
 FROM node:20-alpine AS runner
 WORKDIR /app

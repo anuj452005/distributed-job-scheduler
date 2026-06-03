@@ -29,7 +29,7 @@ COPY packages/events packages/events
 COPY packages/api packages/api
 
 # Build the packages
-RUN npm run build --workspace=packages/api
+RUN npm run build --workspaces --if-present
 
 FROM node:20-alpine AS runner
 WORKDIR /app
