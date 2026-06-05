@@ -4,13 +4,19 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Deploy Flow Bug Fix — all 6 issues resolved, both API and dashboard compile clean.
+- Phase 0: Trigger Subsystem — Unit 01 (Trigger Tables Schema) complete.
 
 ## Current Goal
 
-- User testing: verify Save & Deploy → `/runs/<id>` flow end-to-end.
+- Phase 0: Trigger Subsystem — Unit 02 (`@flowforge/trigger` Package) setup.
 
 ## Completed
+
+- **Phase 0: Unit 01 — Trigger Tables Schema**
+  - Created [010_create_workflow_triggers.sql](file:///c:/gitandgithub/project2026/distibuted-job-worker/flowforge/packages/db/migrations/010_create_workflow_triggers.sql) migration adding custom PostgreSQL ENUMs (`trigger_type`, `trigger_status`) and the `workflow_triggers` table with 4 functional indexes.
+  - Created [011_create_workflow_trigger_executions.sql](file:///c:/gitandgithub/project2026/distibuted-job-worker/flowforge/packages/db/migrations/011_create_workflow_trigger_executions.sql) migration adding the `trigger_execution_status` ENUM, `workflow_trigger_executions` table with the `uq_trigger_idempotency` unique constraint, and historical tracking index.
+  - Built programmatic validation script [verify_migration.ts](file:///c:/gitandgithub/project2026/distibuted-job-worker/flowforge/packages/db/scratch/verify_migration.ts) verifying index existence, nullable unique constraints, ON DELETE SET NULL, and ON DELETE CASCADE behaviors.
+  - Executed migrations and verified schema and typecheck cleanly across all workspaces.
 
 - **Unit 19 & 20 — Run Detail DAG & Dashboard Home**
   - Added REST API routes `GET /api/stats` and `GET /api/steps/:id/logs` to Fastify backend and registered in `server.ts`.
@@ -121,11 +127,11 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- None. Ready for Unit 13.
+- None.
 
 ## Next Up
 
-- Unit 13 — Run trigger and run management routes (`13-run-trigger-api.md`)
+- Phase 0: Unit 02 — `@flowforge/trigger` package (`02-trigger-service-package.md`)
 
 ## Open Questions
 
