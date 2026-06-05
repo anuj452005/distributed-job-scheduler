@@ -8,6 +8,7 @@ const ConfigSchema = z.object({
   PORT:                   z.coerce.number().default(3000),
   SCHEDULER_POLL_INTERVAL_MS: z.coerce.number().default(5000),
   SWEEPER_POLL_INTERVAL_MS:   z.coerce.number().default(15000),
+  CRON_POLL_INTERVAL_MS:      z.coerce.number().default(10000),
 });
 
 // Support fallback from NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY if CLERK_PUBLISHABLE_KEY is not defined

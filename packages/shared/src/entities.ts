@@ -1,4 +1,4 @@
-import type { WorkflowStatus, StepStatus, LogLevel } from './status.js';
+import type { WorkflowStatus, StepStatus, LogLevel, TriggerType, TriggerStatus, TriggerExecutionStatus } from './status.js';
 
 export type WorkflowRow = {
   id:          string;
@@ -81,3 +81,32 @@ export type ConnectionRefRow = {
   created_at:       Date;
   updated_at:       Date;
 };
+
+export type WorkflowTriggerRow = {
+  id:            string;
+  workflow_id:   string;
+  name:          string;
+  type:          TriggerType;
+  status:        TriggerStatus;
+  config:        Record<string, unknown>;
+  next_fire_at:  Date | null;
+  last_fired_at: Date | null;
+  created_by:    string;
+  updated_by:    string;
+  created_at:    Date;
+  updated_at:    Date;
+};
+
+export type WorkflowTriggerExecutionRow = {
+  id:              string;
+  trigger_id:      string;
+  workflow_run_id: string | null;
+  triggered_at:    Date;
+  status:          TriggerExecutionStatus;
+  payload:         Record<string, unknown>;
+  source_type:     TriggerType;
+  idempotency_key: string | null;
+  error_message:   string | null;
+  created_at:      Date;
+};
+

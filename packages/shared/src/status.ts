@@ -34,3 +34,23 @@ export enum LogLevel {
   WARN  = 'WARN',
   ERROR = 'ERROR',
 }
+
+export enum TriggerType {
+  CRON = 'cron',
+  WEBHOOK = 'webhook',
+  EVENT = 'event',
+}
+
+export enum TriggerStatus {
+  ACTIVE = 'ACTIVE',
+  PAUSED = 'PAUSED',
+  DISABLED = 'DISABLED',
+}
+
+export enum TriggerExecutionStatus {
+  PENDING = 'PENDING',
+  SUCCEEDED = 'SUCCEEDED',
+  FAILED = 'FAILED',
+  DEDUPLICATED = 'DEDUPLICATED',
+}
+

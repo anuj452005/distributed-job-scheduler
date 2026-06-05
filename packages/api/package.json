@@ -18,6 +18,7 @@
     "@flowforge/engine": "*",
     "@flowforge/handlers": "*",
     "@flowforge/events": "*",
+    "@flowforge/trigger": "*",
     "fastify": "^5.2.0",
     "@clerk/fastify": "^3.1.32",
     "@fastify/cors": "^10.0.1",

@@ -1,6 +1,7 @@
 import type { Pool } from 'pg';
 import { startRetryScheduler } from './retry-scheduler.js';
 import { startLeaseSweeper } from './lease-sweeper.js';
+import { startCronScheduler } from './cron-scheduler.js';
 import { schedulerContext } from './scheduler-context.js';
 
 export interface SchedulerHandle {
@@ -20,9 +21,11 @@ export function startScheduler(
 
   const retryIntervalMs = parseInt(process.env.SCHEDULER_POLL_INTERVAL_MS || '5000', 10);
   const sweeperIntervalMs = parseInt(process.env.SWEEPER_POLL_INTERVAL_MS || '15000', 10);
+  const cronIntervalMs = parseInt(process.env.CRON_POLL_INTERVAL_MS || '10000', 10);
 
   schedulerContext.retryTimer = startRetryScheduler(pool, retryIntervalMs);
   schedulerContext.sweeperTimer = startLeaseSweeper(pool, sweeperIntervalMs);
+  schedulerContext.cronTimer = startCronScheduler(pool, cronIntervalMs);
 
   return {
     stop: stopScheduler,
@@ -42,6 +45,11 @@ export function stopScheduler(): void {
   if (schedulerContext.sweeperTimer) {
     clearInterval(schedulerContext.sweeperTimer);
     schedulerContext.sweeperTimer = null;
+  }
+
+  if (schedulerContext.cronTimer) {
+    clearInterval(schedulerContext.cronTimer);
+    schedulerContext.cronTimer = null;
   }
 
   schedulerContext.isRunning = false;

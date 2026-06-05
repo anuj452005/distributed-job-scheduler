@@ -4,6 +4,7 @@ import cors from '@fastify/cors';
 import { config } from './config.js';
 import { errorHandler } from './error-handler.js';
 import { healthRoutes } from './routes/health.js';
+import { webhookRoutes } from './routes/webhooks/webhook-routes.js';
 import { workflowRoutes } from './routes/workflows/index.js';
 import { runRoutes } from './routes/runs/index.js';
 import { eventRoutes } from './routes/events/index.js';
@@ -29,6 +30,20 @@ export async function buildServer(): Promise<FastifyInstance> {
       },
     },
   });
+
+  // Enable raw body capture for HMAC validation
+  app.addContentTypeParser(
+    'application/json',
+    { parseAs: 'buffer' },
+    (req, body, done) => {
+      (req as any).rawBody = body;
+      try {
+        done(null, JSON.parse(body.toString()));
+      } catch (err) {
+        done(err as Error, undefined);
+      }
+    }
+  );
 
   // Enable CORS
   await app.register(cors, {
@@ -56,6 +71,9 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // Register health route
   await app.register(healthRoutes);
+
+  // Register public webhook routes under /api
+  await app.register(webhookRoutes, { prefix: '/api' });
 
   // Register workflow routes under /api
   await app.register(workflowRoutes, { prefix: '/api' });

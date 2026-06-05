@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { startScheduler, stopScheduler } from './index.js';
 import { runRetrySchedulerTick } from './retry-scheduler.js';
 import { runLeaseSweeperTick } from './lease-sweeper.js';
+import { runCronSchedulerTick, resolveMisfireTimes } from './cron-scheduler.js';
 
 describe('Scheduler and Lease Sweeper Integration Tests', () => {
   const workflowId = crypto.randomUUID();
@@ -154,5 +155,164 @@ describe('Scheduler and Lease Sweeper Integration Tests', () => {
 
     // Clean up
     await pool.query(`DELETE FROM step_runs WHERE id = $1`, [stepRunId]);
+  });
+
+  test('cron misfire policy resolver', () => {
+    const lastScheduled = new Date('2026-06-05T10:00:00Z');
+    const cronExpr = '*/5 * * * *'; // every 5 minutes
+
+    // SKIP: always returns [lastScheduled]
+    const skipRes = resolveMisfireTimes(lastScheduled, cronExpr, 'SKIP', new Date('2026-06-05T10:12:00Z'));
+    assert.deepStrictEqual(skipRes, [lastScheduled]);
+
+    // RUN_ONCE: returns only the most recently missed scheduled time
+    const runOnceRes = resolveMisfireTimes(lastScheduled, cronExpr, 'RUN_ONCE', new Date('2026-06-05T10:12:00Z'));
+    assert.deepStrictEqual(runOnceRes, [new Date('2026-06-05T10:10:00Z')]);
+
+    // CATCH_UP: returns all missed scheduled times (back-fill)
+    const catchUpRes = resolveMisfireTimes(lastScheduled, cronExpr, 'CATCH_UP', new Date('2026-06-05T10:12:00Z'));
+    assert.deepStrictEqual(catchUpRes, [
+      new Date('2026-06-05T10:05:00Z'),
+      new Date('2026-06-05T10:10:00Z')
+    ]);
+
+    // If no missed fires, fallbacks to [lastScheduled]
+    const fallbackRes = resolveMisfireTimes(lastScheduled, cronExpr, 'RUN_ONCE', new Date('2026-06-05T10:02:00Z'));
+    assert.deepStrictEqual(fallbackRes, [lastScheduled]);
+  });
+
+  test('cron scheduler loop: claim and advance with SKIP misfire policy', async () => {
+    const triggerId = crypto.randomUUID();
+    
+    // Insert ACTIVE cron trigger due 1 minute ago
+    await pool.query(
+      `INSERT INTO workflow_triggers (id, workflow_id, name, type, status, config, next_fire_at, created_by, updated_by)
+       VALUES ($1, $2, $3, 'cron', 'ACTIVE', $4, NOW() - INTERVAL '1 minute', 'system:test', 'system:test')`,
+      [triggerId, workflowId, 'Test SKIP Trigger', JSON.stringify({ cron: '*/5 * * * *', misfire_policy: 'SKIP' })]
+    );
+
+    // Execute the tick
+    await runCronSchedulerTick(pool);
+
+    // Assert the trigger's next_fire_at was advanced and last_fired_at was set
+    const trigRes = await pool.query(
+      `SELECT next_fire_at, last_fired_at FROM workflow_triggers WHERE id = $1`,
+      [triggerId]
+    );
+    const trig = trigRes.rows[0];
+    assert.ok(trig.next_fire_at.getTime() > Date.now());
+    assert.ok(trig.last_fired_at);
+
+    // Assert that execution was tracked and run was created
+    const execRes = await pool.query(
+      `SELECT status, workflow_run_id, payload FROM workflow_trigger_executions WHERE trigger_id = $1`,
+      [triggerId]
+    );
+    assert.strictEqual(execRes.rows.length, 1);
+    assert.strictEqual(execRes.rows[0].status, 'SUCCEEDED');
+    assert.ok(execRes.rows[0].workflow_run_id);
+    
+    const runRes = await pool.query(
+      `SELECT status, triggered_by FROM workflow_runs WHERE id = $1`,
+      [execRes.rows[0].workflow_run_id]
+    );
+    assert.strictEqual(runRes.rows.length, 1);
+    assert.strictEqual(runRes.rows[0].triggered_by, 'system:cron');
+
+    // Clean up
+    await pool.query(`DELETE FROM workflow_trigger_executions WHERE trigger_id = $1`, [triggerId]);
+    await pool.query(`DELETE FROM workflow_runs WHERE workflow_id = $1 AND id != $2`, [workflowId, workflowRunId]);
+    await pool.query(`DELETE FROM workflow_triggers WHERE id = $1`, [triggerId]);
+  });
+
+  test('cron scheduler loop: claim and advance with CATCH_UP misfire policy', async () => {
+    const triggerId = crypto.randomUUID();
+    
+    // Insert ACTIVE cron trigger due 11 minutes ago
+    // A schedule of */5 * * * * starting from 11 mins ago will yield multiple missed executions
+    await pool.query(
+      `INSERT INTO workflow_triggers (id, workflow_id, name, type, status, config, next_fire_at, created_by, updated_by)
+       VALUES ($1, $2, $3, 'cron', 'ACTIVE', $4, NOW() - INTERVAL '11 minutes', 'system:test', 'system:test')`,
+      [triggerId, workflowId, 'Test CATCH_UP Trigger', JSON.stringify({ cron: '*/5 * * * *', misfire_policy: 'CATCH_UP' })]
+    );
+
+    // Execute the tick
+    await runCronSchedulerTick(pool);
+
+    // Assert that execution was tracked for multiple runs (at least 2 missed runs)
+    const execRes = await pool.query(
+      `SELECT status, workflow_run_id FROM workflow_trigger_executions WHERE trigger_id = $1`,
+      [triggerId]
+    );
+    assert.ok(execRes.rows.length >= 2);
+    for (const row of execRes.rows) {
+      assert.strictEqual(row.status, 'SUCCEEDED');
+      assert.ok(row.workflow_run_id);
+    }
+
+    // Clean up
+    await pool.query(`DELETE FROM workflow_trigger_executions WHERE trigger_id = $1`, [triggerId]);
+    await pool.query(`DELETE FROM workflow_runs WHERE workflow_id = $1 AND id != $2`, [workflowId, workflowRunId]);
+    await pool.query(`DELETE FROM workflow_triggers WHERE id = $1`, [triggerId]);
+  });
+
+  test('cron scheduler loop: disables invalid cron configurations', async () => {
+    const triggerId = crypto.randomUUID();
+    
+    // Insert ACTIVE cron trigger with invalid cron config
+    await pool.query(
+      `INSERT INTO workflow_triggers (id, workflow_id, name, type, status, config, next_fire_at, created_by, updated_by)
+       VALUES ($1, $2, $3, 'cron', 'ACTIVE', $4, NOW() - INTERVAL '1 minute', 'system:test', 'system:test')`,
+      [triggerId, workflowId, 'Test Invalid Trigger', JSON.stringify({ cron: 'invalid-cron-string', misfire_policy: 'SKIP' })]
+    );
+
+    // Execute the tick (must not throw, must catch error and disable)
+    await runCronSchedulerTick(pool);
+
+    // Assert trigger is now DISABLED
+    const trigRes = await pool.query(
+      `SELECT status FROM workflow_triggers WHERE id = $1`,
+      [triggerId]
+    );
+    assert.strictEqual(trigRes.rows[0].status, 'DISABLED');
+
+    // Assert no executions were created
+    const execRes = await pool.query(
+      `SELECT id FROM workflow_trigger_executions WHERE trigger_id = $1`,
+      [triggerId]
+    );
+    assert.strictEqual(execRes.rows.length, 0);
+
+    // Clean up
+    await pool.query(`DELETE FROM workflow_triggers WHERE id = $1`, [triggerId]);
+  });
+
+  test('cron scheduler loop: concurrent safety (SKIP LOCKED)', async () => {
+    const triggerId = crypto.randomUUID();
+    
+    // Insert ACTIVE cron trigger due 1 minute ago
+    await pool.query(
+      `INSERT INTO workflow_triggers (id, workflow_id, name, type, status, config, next_fire_at, created_by, updated_by)
+       VALUES ($1, $2, $3, 'cron', 'ACTIVE', $4, NOW() - INTERVAL '1 minute', 'system:test', 'system:test')`,
+      [triggerId, workflowId, 'Test Concurrent Trigger', JSON.stringify({ cron: '0 0 1 1 *', misfire_policy: 'SKIP' })]
+    );
+
+    // Run concurrently
+    await Promise.all([
+      runCronSchedulerTick(pool),
+      runCronSchedulerTick(pool)
+    ]);
+
+    // Assert only 1 execution exists (other one skipped safely because of SKIP LOCKED)
+    const execRes = await pool.query(
+      `SELECT id FROM workflow_trigger_executions WHERE trigger_id = $1`,
+      [triggerId]
+    );
+    assert.strictEqual(execRes.rows.length, 1);
+
+    // Clean up
+    await pool.query(`DELETE FROM workflow_trigger_executions WHERE trigger_id = $1`, [triggerId]);
+    await pool.query(`DELETE FROM workflow_runs WHERE workflow_id = $1 AND id != $2`, [workflowId, workflowRunId]);
+    await pool.query(`DELETE FROM workflow_triggers WHERE id = $1`, [triggerId]);
   });
 });

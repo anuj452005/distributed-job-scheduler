@@ -4,13 +4,27 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Phase 0: Trigger Subsystem — Unit 01 (Trigger Tables Schema) complete.
+- Phase 0: Trigger Subsystem — Unit 03 (Non-Blocking Cron Scheduler) complete.
 
 ## Current Goal
 
-- Phase 0: Trigger Subsystem — Unit 02 (`@flowforge/trigger` Package) setup.
+- Phase 0: Trigger Subsystem — Unit 04 (Webhook Receiver) setup.
 
 ## Completed
+
+- **Phase 0: Unit 03 — Non-Blocking Cron Scheduler**
+  - Added `runCronSchedulerTick` to `@flowforge/scheduler` with a decoupled two-phase claim (Phase 1: transactional `FOR UPDATE SKIP LOCKED` to advance trigger times; Phase 2: non-transactional execution dispatch via `triggerWorkflow`).
+  - Added support for `SKIP`, `RUN_ONCE`, and `CATCH_UP` misfire policies, calculating missed fire windows accurately.
+  - Implemented invalid cron configuration fallback, catching parse errors and automatically updating the trigger's status in the database to `'DISABLED'`.
+  - Introduced `CRON_POLL_INTERVAL_MS` environment variable (default 10000ms) and registered in API config schema.
+  - Wired cron scheduler start/stop timer checks into the main scheduler daemon process.
+  - Wrote robust integration tests in `index.test.ts` verifying policy resolvers, claiming logic, disabled fallbacks, and concurrent safety.
+
+- **Phase 0: Unit 02 — `@flowforge/trigger` Package & TriggerService Scaffold**
+  - Created new package `@flowforge/trigger` in `packages/trigger` with standard ESM exports and types.
+  - Implemented `triggerWorkflow` function in `trigger-service.ts` for atomic trigger claim and lock-free execution dispatch.
+  - Registered `@flowforge/trigger` as monorepo dependencies in `packages/api` and `packages/scheduler`.
+  - Added comprehensive integration tests in `index.test.ts` verifying claiming, deduplication, cron, and failure flows. All tests pass successfully and monorepo typecheck/build compiles cleanly.
 
 - **Phase 0: Unit 01 — Trigger Tables Schema**
   - Created [010_create_workflow_triggers.sql](file:///c:/gitandgithub/project2026/distibuted-job-worker/flowforge/packages/db/migrations/010_create_workflow_triggers.sql) migration adding custom PostgreSQL ENUMs (`trigger_type`, `trigger_status`) and the `workflow_triggers` table with 4 functional indexes.
@@ -131,7 +145,7 @@ Update this file after every meaningful implementation change.
 
 ## Next Up
 
-- Phase 0: Unit 02 — `@flowforge/trigger` package (`02-trigger-service-package.md`)
+- Phase 0: Unit 04 — Webhook Receiver (04-webhook-receiver.md)
 
 ## Open Questions
 
