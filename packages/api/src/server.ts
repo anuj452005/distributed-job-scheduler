@@ -9,6 +9,7 @@ import { workflowRoutes } from './routes/workflows/index.js';
 import { runRoutes } from './routes/runs/index.js';
 import { eventRoutes } from './routes/events/index.js';
 import { statsRoutes } from './routes/stats.js';
+import { triggerRoutes } from './routes/triggers/trigger-routes.js';
 import { handlerRegistry, registerAllHandlers } from '@flowforge/handlers';
 import { pool } from '@flowforge/db';
 import { startEventTriggerListener } from './event-trigger-listener.js';
@@ -88,6 +89,9 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // Register stats routes under /api
   await app.register(statsRoutes, { prefix: '/api' });
+
+  // Register trigger routes under /api
+  await app.register(triggerRoutes, { prefix: '/api' });
 
   // Start the event trigger listener and register onClose hook for graceful teardown
   const stopEventListener = await startEventTriggerListener(pool);
