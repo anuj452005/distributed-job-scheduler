@@ -1,167 +1,101 @@
 # AI Workflow Rules
 
-These are binding rules for any AI coding agent working on this codebase.
-They are not suggestions. Follow them exactly.
+These are binding rules for any AI coding agent working on this codebase. They are not guidelines or recommendations — they are absolute constraints. You must follow them exactly.
 
 ---
 
-## Overall Approach
+## 1. Overall Approach
 
-Build FlowForge incrementally using a spec-driven workflow.
-
-The context files in `flowforge/context/` define what to build, how to build it,
-and the current state of progress. Always implement against these specs.
-Never infer or invent behavior that is not explicitly defined in a context file.
-
-When the spec is unclear, stop. Resolve the ambiguity in the relevant context
-file first. Then implement.
+1. **Be Spec-Driven**: Build FlowForge strictly against the specifications defined in `flowforge/context/`. Do not infer, assume, or invent product features, database fields, or business logic. If it is not explicitly written in a context specification, it does not exist.
+2. **Develop Incrementally**: Build and verify one logical feature step at a time. Never attempt a large, multi-component change in a single run.
+3. **Fail Fast on Ambiguity**: If a context specification is silent, unclear, or contradictory regarding a requirement, stop. Do not make a guess. Raise a question and wait for clarification.
 
 ---
 
-## Scoping Rules
+## 2. Scoping Rules
 
-- Work on exactly one implementation unit at a time.
-- An implementation unit is a single package boundary, a single API route group,
-  a single database migration, or a single component — not a combination.
-- Do not combine frontend and backend changes in one step unless the unit
-  explicitly requires both (e.g. a new API route that is immediately consumed
-  by a new UI component in the same feature).
-- Do not refactor unrelated code while implementing a unit.
-- Do not add fields to the database schema that are not required by the
-  current unit, even if they "might be useful later."
-- Do not implement V2 features (scheduler triggers, cron, backfill, priority)
-  while building MVP units. Mark them as `TODO(v2):` comments and move on.
+1. **Implement One Unit at a Time**: Work on exactly one implementation unit at a time (e.g., a single API route group, a single database migration, a single handler, or a single UI page). 
+2. **Restrict Scope**: Do not combine backend and frontend implementation in a single step unless they are tightly coupled and cannot be verified independently.
+3. **No Speculative Changes**: Do not add fields, components, utilities, or dependencies that are not directly required by the active unit "just because they might be useful later."
+4. **No Unrelated Refactoring**: Do not touch or clean up code outside the files directly relevant to the current implementation unit.
+5. **Enforce MVP Boundaries**: Do not implement V2 features (such as cron trigger schedulers, scaling controls, or custom web editors). Mark them as `TODO(v2):` and ignore them.
 
 ---
 
-## When to Split Work
+## 3. When to Split Work
 
-Split an implementation step into smaller steps if it requires:
-
-- Changes to more than one package boundary at the same time
-  (e.g. `packages/engine/` and `packages/worker/` in the same step).
-- A database schema migration AND application logic changes in the same step.
-- Both a new API route AND a new React page in the same step, unless they are
-  trivially coupled.
-- Behavior that is not fully defined in the context files — resolve the spec
-  gap first, then split the implementation.
-- A change that cannot be verified end-to-end within the same step.
-
-If you cannot write a one-sentence description of what the step does and
-what "done" looks like, the scope is too broad. Split it.
+You must split an implementation step into separate, smaller steps if it involves any of the following:
+1. **Multi-Package Changes**: Changes crossing more than one package boundary (e.g., modifying `packages/engine/` and `packages/worker/` simultaneously).
+2. **Schema and Logic Mixing**: Executing a database migration and writing the application code that uses it in the same step.
+3. **Full-Stack Features**: Building a new API route and creating the dashboard page that calls it. Build, verify, and commit the API route first, then build the UI.
+4. **Unverifiable Code**: Any change that cannot be verified end-to-end (via automated tests, manual testing, or logs) within the current step.
 
 ---
 
-## Handling Missing or Ambiguous Requirements
+## 4. Handling Missing or Ambiguous Requirements
 
-- Do not invent product behavior. If a behavior is not specified in a context
-  file, it does not exist yet.
-- If a requirement is missing: add an open question to `progress-tracker.md`
-  under an "Open Questions" section. Do not implement a guess.
-- If a requirement is ambiguous: state the two possible interpretations in
-  `progress-tracker.md` and ask for a decision before continuing.
-- If a handler's input/output schema is not specified: do not create the handler.
-  Add it to the open questions list and wait for a schema definition.
-- If a database column is not defined in `architecture.md` or
-  `flowforge_system_design.md`: do not add it. Propose it first.
+1. **Stop Executing**: Stop coding immediately when you identify a gap or contradiction in the requirements.
+2. **Document Gaps**: Add the requirement gap or ambiguity to `flowforge/context/progress-tracker.md` under an explicit "Open Questions" header.
+3. **Wait for Approval**: Do not write fallback code, mock behaviors, or defaults. Wait for explicit instructions or a specification update before proceeding.
 
 ---
 
-## Protected Files
+## 5. Protected Files (Do Not Modify)
 
 Do not modify the following files unless explicitly instructed to do so:
-
-- `flowforge/context/*.md` — context docs are updated only when implementation
-  decisions change, not as part of routine feature work.
-- `packages/db/migrations/*.sql` — never edit a migration that has already been
-  applied. Create a new migration instead.
-- `packages/shared/types.ts` — shared types are changed only when a context doc
-  decision requires it. Do not add types speculatively.
-- Any file under `packages/dashboard/components/ui/` — these are generated or
-  curated UI primitives. Extend them; do not rewrite them.
-- `.env.example` — add new variables when they are required by a new unit, but
-  never remove existing variables.
-- `docker-compose.yml` — do not change service definitions without an explicit
-  infrastructure decision.
+1. **Database Migrations**: `packages/db/migrations/*.sql`. Never modify an existing migration file that has already been applied. Create a new, forward-only SQL file.
+2. **Shared Types**: [types.ts](file:///c:/gitandgithub/project2026/distibuted-job-worker/flowforge/packages/shared/src/types.ts). Do not add, edit, or delete types in this file unless a specification update demands it.
+3. **Generated UI Library Components**: Any component under `packages/dashboard/src/components/ui/` (or similar UI primitives directory). If a component needs customization, extend it via wrappers or layout props; do not edit the underlying primitive.
+4. **Environment Defaults**: `.env.example`. You may append new required environment variables but never delete or change existing defaults.
+5. **Compose Files**: `docker-compose.yml`. Do not change container networks, ports, or service volumes without explicit permission.
 
 ---
 
-## Invariants You Must Never Violate
+## 6. Keeping Documentation in Sync
 
-These come directly from `architecture.md`. Never write code that breaks them.
-
-1. **PostgreSQL is the only source of truth.** Never write workflow state to Redis.
-2. **Workers commit with a fencing-token query.** Every success/failure write to
-   `step_runs` must include `AND worker_id = :me AND lease_expires_at > NOW() AND status = 'RUNNING'`.
-   A result with 0 rows updated means the lease was lost — discard the result.
-3. **Steps are pre-created, never created on-the-fly.** All `StepRun` rows are
-   inserted in `PENDING` state when the `WorkflowRun` is created. No code path
-   may insert a `StepRun` row outside of run initialization.
-4. **Handlers never write to `step_runs` or `workflow_runs`.** Handlers return
-   a value or throw. The worker owns all DB writes.
-5. **Workers never sleep for retry delays.** Set `next_run_at` and let the
-   Scheduler promote the row. Never `await sleep(retryDelay)` in a worker.
-6. **Raw secrets never appear in logs or payloads.** Workflow definitions use
-   `connectionRef` names only. Decrypted credentials exist in memory during
-   handler execution only. The log layer must strip them before writing to
-   `step_logs`.
-7. **DAG validation must pass before a workflow is saved.** Never persist a
-   `Workflow` row if topological sort fails, a handler is unregistered, or a
-   dependency reference is unresolvable.
+You must update the relevant context files before marking an implementation unit as complete:
+1. **Boundary Changes**: Update the System Boundaries table in `architecture.md` if folders or packages are added or modified.
+2. **Storage Changes**: Update the Storage Model in `architecture.md` if database tables, cached host folders, or Redis keys are added.
+3. **Registry Changes**: Update the Handlers list in `architecture.md` if a new handler (e.g., a Python or AI executor) is registered.
+4. **Environment Changes**: Add any new environment variables to `.env.example` along with a description of its source in the `architecture.md` Deployment section.
+5. **Standards Updates**: Add newly established patterns to `code-standards.md`.
+6. **Progress Logging**: Mark items as complete (`[x]`) in `progress-tracker.md` only after they have been fully verified.
 
 ---
 
-## Keeping Documentation in Sync with Implementation
+## 7. Invariants You Must Never Violate
 
-Update the relevant context file when any of the following change:
+These rules represent the correctness, safety, and security foundation of the platform. You must write all code to strictly enforce these constraints:
 
-- A new package is added → update the System Boundaries table in `architecture.md`.
-- A new database table or column is added → update the Storage Model in
-  `architecture.md` and the schema in `flowforge_system_design.md`.
-- A handler is added or removed → update the handler table in `architecture.md`.
-- A new API route is added → note it in `architecture.md` if it is a new
-  surface, or in `progress-tracker.md` as a completed unit.
-- An invariant is strengthened or relaxed → update `architecture.md` invariants.
-- A new environment variable is required → add it to `.env.example` and document
-  its source in `architecture.md` (Deployment → Environment Variables table).
-- A code pattern is established that should be followed everywhere → add it to
-  `code-standards.md`.
+### State & Transaction Invariants
+1. **PostgreSQL is the single source of truth.** You must never store workflow, step run, or lease states in Redis. Redis is strictly for ephemeral Pub/Sub event broadcasting.
+2. **You must commit worker results using the fencing-token query.** Every database write marking a step run `SUCCEEDED` or `FAILED` must verify `id = :step_run_id AND worker_id = :worker_id AND status = 'RUNNING' AND lease_expires_at > NOW()`. If 0 rows are updated, discard the output and fail the claim.
+3. **Pre-create all step runs.** You must insert all `StepRun` rows in the `PENDING` state when the `WorkflowRun` is initialized. You are strictly forbidden from creating `StepRun` entries on-the-fly during execution.
+4. **Do not write to the database from within handlers.** Handlers must only return plain outputs or throw errors. The worker process alone manages all database updates to step runs.
+5. **Never block the worker with sleeps.** Do not write `sleep()` routines in workers for retries. Workers must immediately yield on delay. The Scheduler alone promotes rows based on the `next_run_at` timestamp.
+6. **Strip secrets before logging.** Decrypted credentials must exist only in memory. You must filter out and redact any secret, password, or token matching `connection_refs` before writing entries to `step_logs`.
+7. **Enforce DAG validation before save.** You must reject any workflow containing cycles, unregistered handlers, or invalid dependencies at the API layer before database persistence.
 
-Do not update context files to reflect aspirational future behavior. Only
-document what is actually implemented and deployed.
+### Container & Sandbox Security Invariants
+8. **Isolate sandbox networks.** You must set the Docker runtime configuration to `NetworkMode: 'none'` for all execution sandboxes.
+9. **Never run containers as root.** You must configure all execution containers with `User: '1000:1000'` to prevent host privilege escalation.
+10. **Enforce container resource quotas.** You must set strict memory limits (max 512MB RAM) and CPU quotas (max 0.5 CPU cores via `NanoCpus = 500000000`) for all running sandboxes.
+11. **Mount filesystems read-only.** The container root filesystem must be mounted as read-only (`ReadonlyRootfs: true`). Writable files must be restricted entirely to the bound `/app/io` workspace directory.
+12. **Lock cached virtualenv volumes.** Mount the host virtualenv cache directory (`/var/flowforge/cache/venvs/*`) using the read-only mount parameter (`ro`) to prevent running scripts from writing or modifying cached libraries.
+13. **Guarantee container and workspace cleanup.** On step completion (success, failure, timeout, or cancellation/abort), you must explicitly stop and remove the Docker container and recursively delete the temporary host workspace directory.
 
 ---
 
-## Verification Checklist Before Moving to the Next Unit
+## 8. Verification Checklist
 
-Do not mark a unit complete or start the next unit until all of these pass:
+You are strictly forbidden from starting the next implementation unit or closing a task until all of these verification checks pass:
 
-1. **The unit works end-to-end within its defined scope.**
-   - If the unit is a worker claim query: write a test that inserts a `QUEUED`
-     row, runs the claim, and asserts the row is `RUNNING` with a `worker_id`.
-   - If the unit is an API route: test the happy path and one failure path
-     with a real HTTP request against a local or test database.
-   - If the unit is a React component: verify it renders without errors and
-     that the SSE or REST data it depends on is wired correctly.
-
-2. **No invariant from `architecture.md` was violated.**
-   Review the invariants list. If the unit touches the worker, check the
-   fencing query. If the unit touches logging, check secret redaction.
-
-3. **`progress-tracker.md` reflects the completed unit.**
-   Mark it done. Note any open questions that surfaced during implementation.
-
-4. **`npm run build` passes with zero TypeScript errors.**
-   Strict mode is required. `tsc --noEmit` must exit 0.
-
-5. **No unrelated files were modified.**
-   Run `git diff --name-only` and confirm every changed file belongs to the
-   current unit. If an unrelated file was touched, revert it and create a
-   separate step for it.
-
-6. **The database migration (if any) is idempotent and forward-only.**
-   No `DROP COLUMN`, `DROP TABLE`, or destructive changes without a migration
-   plan explicitly approved in context docs.
-
-7. **Environment variables required by the unit are documented.**
-   New env vars appear in `.env.example` with a descriptive comment.
+1. **Verify End-to-End Scope**: Ensure the unit is fully operational.
+   - For database changes: Verify connection and index usage.
+   - For handlers: Verify script processing, logging, and error exits.
+   - For API routes: Test the happy path and failure status codes (e.g., 400, 403, 404) with real requests.
+2. **Run Lint and Build**: Run the build compiler (`npm run build` or equivalent `tsc --noEmit`). The build must compile with **zero TypeScript errors** in strict mode.
+3. **Verify Invariants**: Review the 13 invariants above. Verify that no newly written line of code bypasses a fencing query, writes state to Redis, leaks a credential, runs a container as root, or bypasses network blocks.
+4. **Assert No Unrelated Changes**: Run `git diff --name-only` (or check active workspace diffs). Verify that only files directly associated with the current unit are modified. Revert any accidental changes to unrelated files.
+5. **Validate Environment Configuration**: Verify that any new environment variables are added to `.env.example` with descriptive instructions.
+6. **Update Progress Tracker**: Update the status checklist in `progress-tracker.md` to reflect completed items.
