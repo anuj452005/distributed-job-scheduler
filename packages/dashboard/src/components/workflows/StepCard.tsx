@@ -92,7 +92,7 @@ export default function StepCard({
 
   return (
     <div className="relative flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-5">
-      
+
       {/* Left visual state accent strip */}
       <div className="absolute bottom-0 left-0 top-0 w-1 rounded-l-[var(--radius-lg)] bg-[var(--accent-primary)]" />
 
@@ -127,9 +127,8 @@ export default function StepCard({
             value={step.stepKey}
             onChange={(e) => onChange('stepKey', e.target.value)}
             placeholder="e.g., fetch_user_data"
-            className={`rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-2.5 font-mono text-xs text-[var(--text-mono)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] ${
-              errors.stepKey ? 'border-[var(--danger-border)]' : 'border-[var(--border-default)]'
-            }`}
+            className={`rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-2.5 font-mono text-xs text-[var(--text-mono)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] ${errors.stepKey ? 'border-[var(--danger-border)]' : 'border-[var(--border-default)]'
+              }`}
           />
           {errors.stepKey && (
             <span className="font-sans text-[10px] text-[var(--danger-text)] flex items-center gap-1 mt-0.5 animate-pulse">
@@ -224,7 +223,7 @@ export default function StepCard({
             <Info className="h-3 w-3 text-[var(--text-muted)] cursor-help" />
           </span>
         </label>
-        
+
         <DependencySelector
           currentStepKey={step.stepKey}
           allStepKeys={allStepKeys}
@@ -261,9 +260,8 @@ export default function StepCard({
           value={jsonText}
           onChange={(e) => handleJsonChange(e.target.value)}
           onBlur={handleJsonBlur}
-          className={`h-28 w-full resize-y rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-3 font-mono text-xs text-[var(--text-mono)] outline-none transition-colors ${
-            jsonError ? 'border-[var(--danger-border)] focus:border-[var(--danger-border)]' : 'border-[var(--border-default)] hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)]'
-          }`}
+          className={`h-28 w-full resize-y rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-3 font-mono text-xs text-[var(--text-mono)] outline-none transition-colors ${jsonError ? 'border-[var(--danger-border)] focus:border-[var(--danger-border)]' : 'border-[var(--border-default)] hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)]'
+            }`}
         />
         {/* Handler-specific hint */}
         {HANDLER_HINTS[step.handlerName] && (

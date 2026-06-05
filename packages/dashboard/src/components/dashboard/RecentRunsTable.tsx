@@ -74,7 +74,7 @@ export const RecentRunsTable: React.FC<RecentRunsTableProps> = ({
       {/* Filters Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-4">
         <RunStatusFilter selectedStatus={selectedStatus} onStatusChange={onStatusChange} />
-        
+
         {/* Date Filters & Controls */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">
@@ -93,7 +93,7 @@ export const RecentRunsTable: React.FC<RecentRunsTableProps> = ({
               className="bg-transparent border-none text-[var(--text-primary)] outline-none cursor-pointer focus:ring-0 w-28 text-[11px] font-mono"
             />
           </div>
-          
+
           <button
             onClick={() => {
               onFromDateChange('');
@@ -146,8 +146,8 @@ export const RecentRunsTable: React.FC<RecentRunsTableProps> = ({
                   >
                     <td className="p-2 pl-5 relative">
                       {/* Colored status left indicator strip */}
-                      <div 
-                        className="absolute left-0 top-1 bottom-1 w-1 rounded-r transition-colors duration-200" 
+                      <div
+                        className="absolute left-0 top-1 bottom-1 w-1 rounded-r transition-colors duration-200"
                         style={{ backgroundColor: getStatusColor(run.status) }}
                       />
                       <div className="flex flex-col gap-0.5">
@@ -197,3 +197,4 @@ export const RecentRunsTable: React.FC<RecentRunsTableProps> = ({
     </div>
   );
 };
+

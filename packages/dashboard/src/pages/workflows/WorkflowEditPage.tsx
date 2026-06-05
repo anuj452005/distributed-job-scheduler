@@ -90,8 +90,8 @@ export default function WorkflowEditPage() {
       <div className="flex flex-col xl:flex-row gap-6 items-start">
         {/* LEFT — Workflow Form (flows naturally) */}
         <div className="flex-1 min-w-0 xl:max-w-[660px] w-full">
-          <WorkflowForm 
-            onStepsChange={setPreviewSteps} 
+          <WorkflowForm
+            onStepsChange={setPreviewSteps}
             initialSteps={workflow.steps}
             workflowId={workflow.id}
             initialName={workflow.name}

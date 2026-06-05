@@ -108,9 +108,9 @@ export default function WorkflowForm({
           },
           token,
         );
-        
+
         setStatusText('Triggering first run...');
-        
+
         try {
           const run = await triggerWorkflowRun(workflow.id, { inputPayload: {} }, token);
           navigate(`/runs/${run.id}`);
@@ -124,7 +124,7 @@ export default function WorkflowForm({
           } else {
             setTopLevelError(`Workflow saved, but could not start run: ${triggerErr.message || 'Unknown error'}.`);
           }
-          
+
           // Still navigate to workflows so the user can see their saved workflow
           setTimeout(() => navigate('/workflows'), 3000);
         }
@@ -156,7 +156,7 @@ export default function WorkflowForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 animate-[fadeIn_0.2s_ease-out]">
-      
+
       {/* Top level Error Alert */}
       {topLevelError && (
         <div className="flex items-start gap-2 rounded-[var(--radius-lg)] border border-[var(--danger-border)] bg-[var(--danger-bg)] p-4 font-sans text-xs text-[var(--danger-text)]">
@@ -184,9 +184,8 @@ export default function WorkflowForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Process Customer Invoice Transactions"
-            className={`rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-2.5 font-sans text-xs text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] ${
-              fieldErrors.name ? 'border-[var(--danger-border)]' : 'border-[var(--border-default)]'
-            }`}
+            className={`rounded-[var(--radius-md)] border bg-[var(--bg-base)] p-2.5 font-sans text-xs text-[var(--text-primary)] outline-none transition-colors hover:border-[var(--border-strong)] focus:border-[var(--accent-primary)] ${fieldErrors.name ? 'border-[var(--danger-border)]' : 'border-[var(--border-default)]'
+              }`}
           />
           {fieldErrors.name && (
             <span className="font-sans text-[10px] text-[var(--danger-text)] flex items-center gap-1 mt-0.5 animate-pulse">

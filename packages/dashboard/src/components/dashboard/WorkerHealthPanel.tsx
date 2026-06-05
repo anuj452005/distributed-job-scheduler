@@ -18,13 +18,12 @@ export const WorkerHealthPanel: React.FC<WorkerHealthPanelProps> = ({
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
         <div className="flex items-center gap-2">
           <span
-            className={`h-2 w-2 rounded-full ${
-              isHealthy
+            className={`h-2 w-2 rounded-full ${isHealthy
                 ? 'bg-[var(--state-succeeded-text)]'
                 : isWarning
                   ? 'bg-[var(--state-cancel-req-text)]'
                   : 'bg-[var(--text-muted)]'
-            }`}
+              }`}
           />
           <h3 className="flex items-center gap-1.5 font-sans text-[var(--text-md)] font-semibold text-[var(--text-primary)]">
             {isWarning ? (

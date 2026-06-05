@@ -46,7 +46,7 @@ export default function StepBuilder({
   const getStepErrors = (index: number) => {
     const stepErrors: Record<string, string> = {};
     const prefix = `steps[${index}].`;
-    
+
     Object.entries(errors).forEach(([key, msg]) => {
       if (key.startsWith(prefix)) {
         const fieldName = key.substring(prefix.length);
@@ -58,7 +58,7 @@ export default function StepBuilder({
 
   return (
     <div className="flex flex-col gap-5">
-      
+
       {/* Header bar */}
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2 select-none">
         <h3 className="font-sans text-[var(--text-md)] font-bold text-[var(--text-primary)] flex items-center gap-1.5">

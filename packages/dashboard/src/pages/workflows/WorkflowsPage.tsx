@@ -45,10 +45,10 @@ export default function WorkflowsPage() {
     try {
       const token = await getToken();
       if (!token) throw new Error('Auth session expired.');
-      
+
       const newRun = await triggerWorkflowRun(id, { inputPayload: {} }, token);
       showToast(`Dispatched run for ${name}: ${newRun.id.substring(0, 8)}`);
-      
+
       setTimeout(() => navigate(`/runs/${newRun.id}`), 1000);
     } catch (err: any) {
       setError(`Failed to trigger workflow "${name}": ${err.message || 'Unknown error'}`);
@@ -63,7 +63,7 @@ export default function WorkflowsPage() {
     try {
       const token = await getToken();
       if (!token) throw new Error('Auth session expired.');
-      
+
       await deleteWorkflow(id, token);
       showToast(`Workflow "${name}" successfully deleted.`);
       loadWorkflows();
@@ -78,7 +78,7 @@ export default function WorkflowsPage() {
 
   return (
     <div className="flex flex-col gap-6 relative select-none">
-      
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--state-succeeded-border)] bg-[var(--state-succeeded-bg)] p-3 text-[var(--state-succeeded-text)] animate-[slideIn_0.2s_ease-out]">

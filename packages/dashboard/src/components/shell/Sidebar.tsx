@@ -33,10 +33,9 @@ export default function Sidebar() {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-[var(--radius-md)] border px-3 py-2 font-sans text-[var(--text-sm)] font-medium transition-colors ${
-                  isActive
-                    ? 'bg-[var(--accent-primary-subtle)] text-[var(--accent-primary)] border border-[var(--accent-primary-border)]'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] border border-transparent'
+                `flex items-center gap-3 rounded-[var(--radius-md)] border px-3 py-2 font-sans text-[var(--text-sm)] font-medium transition-colors ${isActive
+                  ? 'bg-[var(--accent-primary-subtle)] text-[var(--accent-primary)] border border-[var(--accent-primary-border)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] border border-transparent'
                 }`
               }
             >
