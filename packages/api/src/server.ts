@@ -10,6 +10,8 @@ import { runRoutes } from './routes/runs/index.js';
 import { eventRoutes } from './routes/events/index.js';
 import { statsRoutes } from './routes/stats.js';
 import { handlerRegistry, registerAllHandlers } from '@flowforge/handlers';
+import { pool } from '@flowforge/db';
+import { startEventTriggerListener } from './event-trigger-listener.js';
 
 
 export async function buildServer(): Promise<FastifyInstance> {
@@ -86,6 +88,12 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // Register stats routes under /api
   await app.register(statsRoutes, { prefix: '/api' });
+
+  // Start the event trigger listener and register onClose hook for graceful teardown
+  const stopEventListener = await startEventTriggerListener(pool);
+  app.addHook('onClose', async () => {
+    await stopEventListener();
+  });
 
   return app;
 }

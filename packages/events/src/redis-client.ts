@@ -36,3 +36,24 @@ publisher.on('error', (err: any) => {
 subscriber.on('error', (err: any) => {
   logger.error({ err }, 'Redis subscriber error');
 });
+
+/**
+ * Returns a fresh Redis connection configured for subscribe mode.
+ * Subscriber connections are dedicated — they cannot execute other commands.
+ * Callers are responsible for calling quit() on teardown.
+ */
+export function getRedisSubscriber(): any {
+  const client = useMock
+    ? new (subscriberClient.constructor)()
+    : new (Redis as any)(REDIS_URL, {
+        lazyConnect: false,
+        enableAutoPipelining: false,
+      });
+
+  client.on('error', (err: any) => {
+    logger.error({ err }, 'Redis subscriber client error');
+  });
+
+  return client;
+}
+
