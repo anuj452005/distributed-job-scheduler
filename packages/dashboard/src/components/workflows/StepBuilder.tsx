@@ -33,12 +33,23 @@ export default function StepBuilder({
     onChange(updated);
   };
 
-  const handleStepChange = (index: number, field: keyof StepInput, value: any) => {
+  const handleStepChange = (
+    index: number,
+    fieldOrChanges: keyof StepInput | Partial<StepInput>,
+    value?: any
+  ) => {
     const updated = [...steps];
-    updated[index] = {
-      ...updated[index],
-      [field]: value,
-    };
+    if (typeof fieldOrChanges === 'object') {
+      updated[index] = {
+        ...updated[index],
+        ...fieldOrChanges,
+      };
+    } else {
+      updated[index] = {
+        ...updated[index],
+        [fieldOrChanges]: value,
+      };
+    }
     onChange(updated);
   };
 

@@ -7,7 +7,7 @@ interface StepCardProps {
   index: number;
   step: StepInput;
   allStepKeys: string[];
-  onChange: (field: keyof StepInput, value: any) => void;
+  onChange: (fieldOrChanges: keyof StepInput | Partial<StepInput>, value?: any) => void;
   onRemove: () => void;
   errors?: Record<string, string>;
 }
@@ -53,12 +53,13 @@ export default function StepCard({
   const handlers = Object.keys(HANDLER_TEMPLATES);
 
   const handleHandlerChange = (newHandler: string) => {
-    onChange('handlerName', newHandler);
-    // Auto-populate the payload template for this handler
     const template = HANDLER_TEMPLATES[newHandler] ?? {};
     const templateStr = JSON.stringify(template, null, 2);
     setJsonText(templateStr);
-    onChange('inputConfig', template);
+    onChange({
+      handlerName: newHandler,
+      inputConfig: template,
+    });
     setJsonError(null);
   };
 
