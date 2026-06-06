@@ -247,6 +247,7 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       headers: {
         authorization: 'Bearer valid-test-token',
         'x-mock-role': 'viewer',
+        'x-mock-user-id': 'operator-user-123',
       },
     });
 
@@ -270,6 +271,7 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       headers: {
         authorization: 'Bearer valid-test-token',
         'x-mock-role': 'viewer',
+        'x-mock-user-id': 'operator-user-123',
       },
     });
 
@@ -365,6 +367,7 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       headers: {
         authorization: 'Bearer valid-test-token',
         'x-mock-role': 'operator',
+        'x-mock-user-id': 'operator-user-123',
       },
       payload,
     });
@@ -386,6 +389,7 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       headers: {
         authorization: 'Bearer valid-test-token',
         'x-mock-role': 'operator',
+        'x-mock-user-id': 'operator-user-123',
       },
     });
     assert.strictEqual(deleteConfRes.statusCode, 409);
@@ -569,6 +573,7 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       headers: {
         authorization: 'Bearer valid-test-token',
         'x-mock-role': 'viewer',
+        'x-mock-user-id': 'operator-user-123',
       },
     });
 
@@ -608,6 +613,7 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       headers: {
         authorization: 'Bearer valid-test-token',
         'x-mock-role': 'viewer',
+        'x-mock-user-id': 'operator-user-123',
       },
     });
 
@@ -627,6 +633,7 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       headers: {
         authorization: 'Bearer valid-test-token',
         'x-mock-role': 'viewer',
+        'x-mock-user-id': 'operator-user-123',
       },
     });
 
@@ -647,6 +654,7 @@ describe('Fastify API Foundation and Authentication Tests', () => {
       headers: {
         authorization: 'Bearer valid-test-token',
         'x-mock-role': 'viewer',
+        'x-mock-user-id': 'operator-user-123',
       },
     });
 

@@ -107,3 +107,17 @@ export async function triggerWorkflowRun(
 ): Promise<WorkflowRunDto> {
   return apiClient<WorkflowRunDto>('POST', `/api/workflows/${id}/runs`, body, token);
 }
+
+export async function getRunsByWorkflow(
+  workflowId: string,
+  token: string,
+  page: number = 1,
+  limit: number = 20,
+  status?: string,
+): Promise<PaginatedList<any>> {
+  let path = `/api/workflows/${workflowId}/runs?page=${page}&limit=${limit}`;
+  if (status && status !== 'ALL') {
+    path += `&status=${status}`;
+  }
+  return apiClient<PaginatedList<any>>('GET', path, undefined, token);
+}

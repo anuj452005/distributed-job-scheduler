@@ -80,7 +80,7 @@ export const triggerRoutes: FastifyPluginAsync = async (fastify) => {
         ]
       );
 
-      return reply.status(201).send({ id: triggerId });
+      return reply.status(201).send({ data: { id: triggerId } });
     }
   );
 
@@ -96,7 +96,7 @@ export const triggerRoutes: FastifyPluginAsync = async (fastify) => {
          ORDER BY created_at ASC`,
         [request.params.workflowId]
       );
-      return reply.send({ triggers: res.rows });
+      return reply.send({ data: { triggers: res.rows } });
     }
   );
 
@@ -123,7 +123,7 @@ export const triggerRoutes: FastifyPluginAsync = async (fastify) => {
         [trigger.id]
       );
 
-      return reply.send({ trigger, recentExecutions: historyRes.rows });
+      return reply.send({ data: { trigger, recentExecutions: historyRes.rows } });
     }
   );
 
@@ -223,7 +223,7 @@ export const triggerRoutes: FastifyPluginAsync = async (fastify) => {
         ]
       );
 
-      return reply.send({ updated: true });
+      return reply.send({ data: { updated: true } });
     }
   );
 
@@ -255,7 +255,7 @@ export const triggerRoutes: FastifyPluginAsync = async (fastify) => {
         [request.userId, triggerId]
       );
 
-      return reply.send({ status: 'PAUSED' });
+      return reply.send({ data: { status: 'PAUSED' } });
     }
   );
 
@@ -300,7 +300,7 @@ export const triggerRoutes: FastifyPluginAsync = async (fastify) => {
         [request.userId, triggerId]
       );
 
-      return reply.send({ status: 'ACTIVE' });
+      return reply.send({ data: { status: 'ACTIVE' } });
     }
   );
 
@@ -330,7 +330,62 @@ export const triggerRoutes: FastifyPluginAsync = async (fastify) => {
         [request.userId, triggerId]
       );
 
-      return reply.send({ status: 'DISABLED' });
+      return reply.send({ data: { status: 'DISABLED' } });
+    }
+  );
+
+  // ── ROTATE WEBHOOK TOKEN (ACTIVE/PAUSED only) ─────────────────────────────
+  fastify.post<{ Params: { triggerId: string } }>(
+    '/triggers/:triggerId/rotate',
+    { preHandler: [requireAuth, requireRole('operator')] },
+    async (request, reply) => {
+      const { triggerId } = request.params;
+
+      const triggerRes = await pool.query(
+        `SELECT type, config, status FROM workflow_triggers WHERE id = $1`,
+        [triggerId]
+      );
+      const trigger = triggerRes.rows[0];
+      if (!trigger) {
+        return reply.status(404).send({ error: 'TRIGGER_NOT_FOUND' });
+      }
+
+      if (trigger.type !== 'webhook') {
+        return reply.status(422).send({
+          error: 'INVALID_TRIGGER_TYPE',
+          message: 'Only webhook triggers can have their tokens rotated.',
+        });
+      }
+
+      if (trigger.status === 'DISABLED') {
+        return reply.status(409).send({
+          error: 'TRIGGER_DISABLED',
+          message: 'Cannot rotate tokens on disabled triggers.',
+        });
+      }
+
+      const newToken = generateWebhookToken();
+      const newConfig = {
+        ...trigger.config,
+        webhook_token: newToken,
+      };
+
+      await pool.query(
+        `UPDATE workflow_triggers
+         SET config = $1,
+             updated_by = $2,
+             updated_at = NOW()
+         WHERE id = $3`,
+        [JSON.stringify(newConfig), request.userId, triggerId]
+      );
+
+      await pool.query(
+        `INSERT INTO audit_logs (actor_id, action, resource_id)
+         VALUES ($1, 'trigger.rotate', $2)`,
+        [request.userId, triggerId]
+      );
+
+      return reply.send({ data: { webhook_token: newToken } });
     }
   );
 

@@ -12,6 +12,7 @@ COPY packages/scheduler/package.json packages/scheduler/
 COPY packages/engine/package.json packages/engine/
 COPY packages/handlers/package.json packages/handlers/
 COPY packages/events/package.json packages/events/
+COPY packages/trigger/package.json packages/trigger/
 COPY packages/api/package.json packages/api/
 
 # Install dependencies for api workspace
@@ -26,6 +27,7 @@ COPY packages/scheduler packages/scheduler
 COPY packages/engine packages/engine
 COPY packages/handlers packages/handlers
 COPY packages/events packages/events
+COPY packages/trigger packages/trigger
 COPY packages/api packages/api
 
 # Build the packages in topological order
@@ -34,8 +36,9 @@ RUN npm run build --workspace=packages/db
 RUN npm run build --workspace=packages/queue
 RUN npm run build --workspace=packages/events
 RUN npm run build --workspace=packages/handlers
-RUN npm run build --workspace=packages/scheduler
 RUN npm run build --workspace=packages/engine
+RUN npm run build --workspace=packages/trigger
+RUN npm run build --workspace=packages/scheduler
 RUN npm run build --workspace=packages/api
 
 FROM node:20-alpine AS runner

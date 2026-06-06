@@ -127,7 +127,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
     });
 
     assert.strictEqual(res.statusCode, 201);
-    const body = JSON.parse(res.body);
+    const body = JSON.parse(res.body).data;
     assert.ok(body.id);
     createdTriggerIds.push(body.id);
 
@@ -173,7 +173,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
     });
 
     assert.strictEqual(res.statusCode, 201);
-    const body = JSON.parse(res.body);
+    const body = JSON.parse(res.body).data;
     assert.ok(body.id);
     createdTriggerIds.push(body.id);
 
@@ -206,7 +206,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
     });
 
     assert.strictEqual(res.statusCode, 201);
-    const body = JSON.parse(res.body);
+    const body = JSON.parse(res.body).data;
     assert.ok(body.id);
     createdTriggerIds.push(body.id);
 
@@ -230,7 +230,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
     });
 
     assert.strictEqual(res.statusCode, 200);
-    const body = JSON.parse(res.body);
+    const body = JSON.parse(res.body).data;
     assert.ok(Array.isArray(body.triggers));
     // We created 3 triggers for this workflow
     assert.strictEqual(body.triggers.length, 3);
@@ -249,7 +249,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
     });
 
     assert.strictEqual(res.statusCode, 200);
-    const body = JSON.parse(res.body);
+    const body = JSON.parse(res.body).data;
     assert.strictEqual(body.trigger.id, triggerId);
     assert.strictEqual(body.trigger.name, 'Daily Cron Trigger');
     assert.ok(Array.isArray(body.recentExecutions));
@@ -298,7 +298,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
     });
 
     assert.strictEqual(res.statusCode, 200);
-    const body = JSON.parse(res.body);
+    const body = JSON.parse(res.body).data;
     assert.strictEqual(body.updated, true);
 
     const dbRes = await pool.query(
@@ -389,7 +389,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
       },
     });
     assert.strictEqual(pauseRes.statusCode, 200);
-    assert.strictEqual(JSON.parse(pauseRes.body).status, 'PAUSED');
+    assert.strictEqual(JSON.parse(pauseRes.body).data.status, 'PAUSED');
 
     // Verify database and audit log
     let dbStatus = await pool.query(`SELECT status FROM workflow_triggers WHERE id = $1`, [triggerId]);
@@ -432,7 +432,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
       },
     });
     assert.strictEqual(resumeRes.statusCode, 200);
-    assert.strictEqual(JSON.parse(resumeRes.body).status, 'ACTIVE');
+    assert.strictEqual(JSON.parse(resumeRes.body).data.status, 'ACTIVE');
 
     // Verify database and audit log
     dbStatus = await pool.query(`SELECT status FROM workflow_triggers WHERE id = $1`, [triggerId]);
@@ -463,7 +463,7 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
       },
     });
     assert.strictEqual(disableRes.statusCode, 200);
-    assert.strictEqual(JSON.parse(disableRes.body).status, 'DISABLED');
+    assert.strictEqual(JSON.parse(disableRes.body).data.status, 'DISABLED');
 
     // Verify database and audit log
     dbStatus = await pool.query(`SELECT status FROM workflow_triggers WHERE id = $1`, [triggerId]);
@@ -574,5 +574,96 @@ describe('Workflow Trigger CRUD and State Machine Integration Tests', () => {
       },
     });
     assert.strictEqual(deleteRes.statusCode, 403);
+  });
+
+  test('Webhook Token Rotation behaviors', async () => {
+    // We have:
+    // Daily Cron Trigger: createdTriggerIds[0]
+    // Secure Webhook Trigger: createdTriggerIds[1]
+    const webhookId = createdTriggerIds[1];
+    const cronId = createdTriggerIds[0];
+
+    // Fetch initial token
+    const initialRes = await pool.query(
+      `SELECT config, status FROM workflow_triggers WHERE id = $1`,
+      [webhookId]
+    );
+    const initialToken = initialRes.rows[0].config.webhook_token;
+    assert.ok(initialToken);
+
+    // 1. Operator rotates webhook token -> 200 and returns new token
+    const rotateRes = await app.inject({
+      method: 'POST',
+      url: `/api/triggers/${webhookId}/rotate`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'operator',
+        'x-mock-user-id': 'operator-123',
+      },
+    });
+    assert.strictEqual(rotateRes.statusCode, 200);
+    const body = JSON.parse(rotateRes.body).data;
+    assert.ok(body.webhook_token);
+    assert.notStrictEqual(body.webhook_token, initialToken);
+
+    // Verify database value and audit log
+    const dbRes = await pool.query(
+      `SELECT config FROM workflow_triggers WHERE id = $1`,
+      [webhookId]
+    );
+    assert.strictEqual(dbRes.rows[0].config.webhook_token, body.webhook_token);
+    
+    const auditRes = await pool.query(
+      `SELECT 1 FROM audit_logs WHERE resource_id = $1 AND action = 'trigger.rotate'`,
+      [webhookId]
+    );
+    assert.strictEqual(auditRes.rows.length, 1);
+
+    // 2. Viewer tries to rotate -> 403
+    const viewerRes = await app.inject({
+      method: 'POST',
+      url: `/api/triggers/${webhookId}/rotate`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'viewer',
+      },
+    });
+    assert.strictEqual(viewerRes.statusCode, 403);
+
+    // 3. Operator tries to rotate non-webhook (cron) trigger -> 422 INVALID_TRIGGER_TYPE
+    const cronRotateRes = await app.inject({
+      method: 'POST',
+      url: `/api/triggers/${cronId}/rotate`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'operator',
+      },
+    });
+    assert.strictEqual(cronRotateRes.statusCode, 422);
+    assert.strictEqual(JSON.parse(cronRotateRes.body).error, 'INVALID_TRIGGER_TYPE');
+
+    // 4. Operator tries to rotate disabled webhook trigger -> 409 TRIGGER_DISABLED
+    // Disable it first
+    await pool.query(
+      `UPDATE workflow_triggers SET status = 'DISABLED' WHERE id = $1`,
+      [webhookId]
+    );
+
+    const disabledRotateRes = await app.inject({
+      method: 'POST',
+      url: `/api/triggers/${webhookId}/rotate`,
+      headers: {
+        authorization: 'Bearer valid-test-token',
+        'x-mock-role': 'operator',
+      },
+    });
+    assert.strictEqual(disabledRotateRes.statusCode, 409);
+    assert.strictEqual(JSON.parse(disabledRotateRes.body).error, 'TRIGGER_DISABLED');
+
+    // Restore status to ACTIVE for cleanup
+    await pool.query(
+      `UPDATE workflow_triggers SET status = 'ACTIVE' WHERE id = $1`,
+      [webhookId]
+    );
   });
 });
