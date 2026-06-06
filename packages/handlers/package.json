@@ -13,6 +13,7 @@
   "dependencies": {
     "@flowforge/shared": "*",
     "jsonata": "^2.0.3",
+    "resend": "^6.12.4",
     "zod": "^3.22.4"
   },
   "devDependencies": {
