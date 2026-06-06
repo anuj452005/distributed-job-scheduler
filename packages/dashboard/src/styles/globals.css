@@ -110,12 +110,6 @@
   background: var(--text-secondary);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 html, body {
   background: var(--bg-base);
   color: var(--text-primary);
@@ -171,6 +165,12 @@ html, body {
 }
 
 @layer base {
+  /* CSS reset inside @layer base so Tailwind utilities override it */
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -226,4 +226,3 @@ html, body {
 .running-node-pulse {
   animation: nodePulse 2s infinite ease-in-out;
 }
-

@@ -1,10 +1,12 @@
 import { useAuth, RedirectToSignIn } from '@clerk/react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import TopNav from './TopNav.tsx';
 import Sidebar from './Sidebar.tsx';
+import LandingPage from '../../pages/LandingPage.tsx';
 
 export default function AppShell() {
   const { isSignedIn, isLoaded } = useAuth();
+  const location = useLocation();
 
   if (!isLoaded) {
     return (
@@ -18,6 +20,9 @@ export default function AppShell() {
   }
 
   if (!isSignedIn) {
+    if (location.pathname === '/') {
+      return <LandingPage />;
+    }
     return <RedirectToSignIn />;
   }
 
