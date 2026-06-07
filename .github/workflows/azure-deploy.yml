@@ -54,10 +54,33 @@ jobs:
           docker push "$ACR_LOGIN_SERVER/flowforge-worker:latest"
 
       - name: Update Azure Container Apps
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
         run: |
           ACR_LOGIN_SERVER=$(az acr show --name "$AZ_ACR_NAME" --query "loginServer" -o tsv | tr -d '\r\n')
-          az containerapp update --name "$AZ_API_APP_NAME" --resource-group "$AZ_RG_NAME" --image "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
-          az containerapp update --name "$AZ_WORKER_APP_NAME" --resource-group "$AZ_RG_NAME" --image "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
+          
+          # 1. Update API container app secrets & environment variables
+          if [ -n "$RESEND_API_KEY" ]; then
+            az containerapp secret set --name "$AZ_API_APP_NAME" --resource-group "$AZ_RG_NAME" --secrets "resend-api-key=$RESEND_API_KEY"
+            az containerapp update --name "$AZ_API_APP_NAME" --resource-group "$AZ_RG_NAME" \
+              --image "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}" \
+              --set-env-vars "RESEND_API_KEY=secretref:resend-api-key" "RESEND_FROM_EMAIL=$RESEND_FROM_EMAIL"
+          else
+            az containerapp update --name "$AZ_API_APP_NAME" --resource-group "$AZ_RG_NAME" \
+              --image "$ACR_LOGIN_SERVER/flowforge-api:${{ github.sha }}"
+          fi
+
+          # 2. Update Worker container app secrets & environment variables
+          if [ -n "$RESEND_API_KEY" ]; then
+            az containerapp secret set --name "$AZ_WORKER_APP_NAME" --resource-group "$AZ_RG_NAME" --secrets "resend-api-key=$RESEND_API_KEY"
+            az containerapp update --name "$AZ_WORKER_APP_NAME" --resource-group "$AZ_RG_NAME" \
+              --image "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}" \
+              --set-env-vars "RESEND_API_KEY=secretref:resend-api-key" "RESEND_FROM_EMAIL=$RESEND_FROM_EMAIL"
+          else
+            az containerapp update --name "$AZ_WORKER_APP_NAME" --resource-group "$AZ_RG_NAME" \
+              --image "$ACR_LOGIN_SERVER/flowforge-worker:${{ github.sha }}"
+          fi
 
       - name: Fetch API URL
         id: fetch-api-url
